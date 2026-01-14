@@ -1,0 +1,26 @@
+.sidebar {
+  width: 200px;
+  background-color: #f0f0f0;
+  padding: 5px;
+  position: sticky;  /* stays in view when scrolling */
+  top: 0;            /* relative to parent */
+  height: calc(100vh - 60px); /* if needed */
+}
+
+li {
+  border-radius: 4px;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0.75rem 1.25rem;
+  text-decoration: none;
+  font-weight: 500;
+  width: 100%;
+  margin-top: 10px;
+}
+
+/* Hover effect */
+li:hover {
+  opacity: 0.95;
+  background-color: #E7E7E7;
+}
