@@ -30,7 +30,6 @@ type StatScan = {
   ReadTime?: string;
 };
 
-
 type ResetBaselines = Record<string, number>;
 
 // --- Component ---
@@ -80,39 +79,31 @@ const TagManagement: React.FC = () => {
     );
   }, [stats, tagList]);
 
-  
-const loadTagStreamScan = async () => {
-  try {
-    const [tagsRes, statsRes] = await Promise.all([
-      axios.get<Tag[]>("http://localhost:5000/api/tags"),
-      axios.get<StatScan[]>("http://localhost:5000/api/stats-scan"),
-    ]);
+  const loadTagStreamScan = async () => {
+    try {
+      const [tagsRes, statsRes] = await Promise.all([
+        axios.get<Tag[]>("http://localhost:5000/api/tags"),
+        axios.get<StatScan[]>("http://localhost:5000/api/stats-scan"),
+      ]);
 
-    const tags = tagsRes.data;
-    const scans = statsRes.data;
+      const tags = tagsRes.data;
+      const scans = statsRes.data;
 
-    const merged = scans.map((scan) => {
-      const tag = tags.find((t) => t.epc === scan.EPC);
-      return {
-        ...scan,
-        tag_name: tag?.tag_name || "N/A",
-        purpose: tag?.purpose || "N/A",
-      };
-    });
+      const merged = scans.map((scan) => {
+        const tag = tags.find((t) => t.epc === scan.EPC);
+        return {
+          ...scan,
+          tag_name: tag?.tag_name || "N/A",
+          purpose: tag?.purpose || "N/A",
+        };
+      });
 
-    setTagStreamScanStats(merged);
-  } catch (err) {
-    console.error("Failed to load Tag Stream:", err);
-    setTagStreamScanStats([]);
-  }
-};
-
-// Auto-refresh every 3 seconds
-useEffect(() => {
-  loadTagStreamScan();
-  const interval = setInterval(loadTagStreamScan, 3000);
-  return () => clearInterval(interval);
-}, []);
+      setTagStreamScanStats(merged);
+    } catch (err) {
+      console.error("Failed to load Tag Stream:", err);
+      setTagStreamScanStats([]);
+    }
+  };
 
   // --- Send only Tag Stream data to Dashboard ---
   useEffect(() => {
@@ -210,13 +201,7 @@ useEffect(() => {
 
   // --- API calls --- Stream tags Removed*
 
-
-// --- Tag Stream: Refresh every 3 seconds ---
-useEffect(() => {
-  loadTagStreamScan();
-  const interval = setInterval(loadTagStreamScan, 3000);
-  return () => clearInterval(interval);
-}, []);
+  // --- Tag Save ---
   const saveTag = async () => {
     if (!newEpc || !newTagName) return;
     try {
@@ -236,7 +221,7 @@ useEffect(() => {
       alert(error.response?.data?.error || error.message);
     }
   };
-
+  // --- Tag Delete ---
   const deleteTag = async (epc: string) => {
     if (!window.confirm("Are you sure you want to delete this tag?")) return;
     try {
@@ -409,39 +394,72 @@ useEffect(() => {
               )}
             </div>
 
-           {/* Tag Stream Table */}
+            {/* Tag Stream Table */}
             <div className="card">
-              <h2 className="text-sm font-medium text-gray-900 mb-5">Tag Stream</h2>
+              <h2 className="text-sm font-medium text-gray-900 mb-5">
+                Tag Stream
+              </h2>
               {tagStreamScanStats.length === 0 ? (
-                <div className="text-center py-8 text-gray-400 text-sm">No scan data available.</div>
+                <div className="text-center py-8 text-gray-400 text-sm">
+                  No scan data available.
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tag Name</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EPC</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TID</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RSSI</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">AntID</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Read Time</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Tag Name
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          EPC
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          TID
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          RSSI
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          AntID
+                        </th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Read Time
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {tagStreamScanStats.map((tag) => (
                         <tr key={tag.EPC}>
-                          <td className="px-4 py-2 text-sm text-gray-900">{tag.tag_name}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{tag.EPC}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{tag.TID || "N/A"}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{tag.RSSI}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{tag.AntId}</td>
-                          <td className="px-4 py-2 text-sm text-gray-500">{tag.ReadTime ? new Date(tag.ReadTime).toLocaleString() : "Not scanned yet"}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">
+                            {tag.tag_name}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {tag.EPC}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {tag.TID || "N/A"}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {tag.RSSI}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {tag.AntId}
+                          </td>
+                          <td className="px-4 py-2 text-sm text-gray-500">
+                            {tag.ReadTime
+                              ? new Date(tag.ReadTime).toLocaleString()
+                              : "Not scanned yet"}
+                          </td>
                           <td className="px-4 py-2 text-center">
                             <input
                               type="checkbox"
                               checked={!!selectedTags[tag.EPC]}
                               onChange={(e) =>
-                                setSelectedTags({ ...selectedTags, [tag.EPC]: e.target.checked })
+                                setSelectedTags({
+                                  ...selectedTags,
+                                  [tag.EPC]: e.target.checked,
+                                })
                               }
                               className="h-4 w-4 text-blue-600 border-gray-300 rounded"
                             />
