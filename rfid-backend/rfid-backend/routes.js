@@ -161,53 +161,8 @@ router.delete("/tags/:epc", (req, res) => {
 });
 
 //
-// 7️⃣ Fetch all tag stream data FROM SCAN TABLES
-// GET /api/tags-scan
-
-//   ---Removed---
-
-//
-// 8️⃣ Fetch EPC statistics FROM SCAN TABLES
-// GET /api/stats-scan
-//
-router.get("/stats-scan", (req, res) => {
-  const sql = `
-    SELECT 
-      EPC,
-      TID,
-      RSSI,
-      AntId,
-      ReadTime
-    FROM epc_stats_scan
-    ORDER BY ReadTime DESC
-  `;
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error("Error fetching stats from scan tables:", err);
-      return res.status(500).json({ error: "Failed to fetch stats (scan)" });
-    }
-    res.json(results);
-  });
-});
-
-  // GET /api/validate-epc?epc=XXXX
-  router.get("/validate-epc", (req, res) => {
-    const { epc } = req.query;
-
-    const sql = `
-    SELECT 
-      s.epc,
-      COALESCE(t.tag_name, s.epc) AS tag_name
-    FROM epc_stats_scan s
-    LEFT JOIN tag_info t ON s.epc = t.epc
-    WHERE s.epc = ?
-  `;
-
-    db.query(sql, [epc], (err, results) => {
-      if (err) return res.status(500).json({ error: err });
-      res.json(results[0] || null);
-    });
-  });
+// 7️⃣ Removed: Fetch all tag stream data FROM SCAN TABLES
+// 8️⃣ Removed: Fetch EPC statistics FROM SCAN TABLES
 
 
 module.exports = router;

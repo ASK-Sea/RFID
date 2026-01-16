@@ -1,7 +1,7 @@
 const mqtt = require('mqtt');
 const db = require('./db');
 
-function startMQTT() {
+function startMQTT(io) {
   const client = mqtt.connect(process.env.MQTT_HOST);
 
   client.on('connect', () => {
@@ -22,17 +22,31 @@ function startMQTT() {
 
       console.log("Received EPC:", epc, "read_time:", read_time);
 
-      // 1️⃣ Insert raw scan into `scans`
+      // Query tag_info to get tag_name
       db.query(
-        "INSERT INTO scans (epc, read_time) VALUES (?, ?)",
-        [epc, read_time],
-        (err) => {
-          if (err) console.error("DB Insert Error (scans):", err);
-          else console.log("Inserted into scans:", epc);
+        "SELECT tag_name FROM tag_info WHERE epc = ?",
+        [epc],
+        (err, results) => {
+          // Only emit if tag exists in database
+          if (results && results.length > 0 && results[0]?.tag_name) {
+            const tag_name = results[0].tag_name;
+
+            // Emit MQTT data directly to connected clients
+            io.emit('mqtt-data', {
+              epc: epc,
+              tag_name: tag_name,
+              read_time: read_time,
+              timestamp: new Date().toISOString()
+            });
+
+            console.log("Emitted to clients:", { epc, tag_name, read_time });
+          } else {
+            console.log("EPC not found in tag_info, skipping emission:", epc);
+          }
         }
       );
 
-      // 2️⃣ Update EPC statistics in `epc_stats`
+      // Update EPC statistics in `epc_stats`
       db.query(
         `INSERT INTO epc_stats (epc, scan_count, last_seen)
          VALUES (?, 1, NOW())
