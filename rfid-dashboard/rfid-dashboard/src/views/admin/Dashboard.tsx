@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Header, Sidebar, bgImage } from "./import";
-import axios from "axios";
 
 // --- Types ---
 type SelectedTag = { epc: string; tag_name: string };
@@ -11,8 +10,10 @@ const Dashboard: React.FC = () => {
     time: "",
   });
 
-  const [selectedEpcs, setSelectedEpcs] = useState<string[]>([]);
-  const [validatedTags, setValidatedTags] = useState<SelectedTag[]>([]);
+  const [latestScans, setLatestScans] = useState<SelectedTag[]>(() => {
+    const saved = sessionStorage.getItem("latestScans");
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // ------------------ Time ------------------
   useEffect(() => {
@@ -39,54 +40,21 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ------------------ Load selected EPCs from localStorage ------------------
+  // ------------------ Listen for storage updates from App.tsx ------------------
   useEffect(() => {
-    const loadSelectedEpcs = () => {
-      const stored = localStorage.getItem("selectedTags");
-      setSelectedEpcs(stored ? JSON.parse(stored) : []);
+    const handleStorageChange = () => {
+      const saved = sessionStorage.getItem("latestScans");
+      if (saved) {
+        setLatestScans(JSON.parse(saved));
+      }
     };
 
-    loadSelectedEpcs();
-    window.addEventListener("storage", loadSelectedEpcs);
-    return () => window.removeEventListener("storage", loadSelectedEpcs);
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
-
-  // ------------------ Build validatedTags ------------------
-  useEffect(() => {
-    if (!selectedEpcs.length) {
-      setValidatedTags([]);
-      return;
-    }
-
-    validateEpcs(selectedEpcs);
-  }, [selectedEpcs]);
-
-  //---APC call from eps_stats left join tags_info
-const validateEpcs = async (epcs: string[]) => {
-  try {
-    const results = await Promise.all(
-      epcs.map(async (epc) => {
-        const res = await axios.get(
-          "http://localhost:5000/api/validate-epc",
-          { params: { epc } }
-        );
-
-        return {
-          epc,
-          tag_name: res.data?.tag_name || epc, // fallback
-        };
-      })
-    );
-
-    setValidatedTags(results);
-  } catch (err) {
-    console.error("EPC validation failed", err);
-
-    // fallback: show EPC only
-    setValidatedTags(epcs.map(epc => ({ epc, tag_name: epc })));
-  }
-};
-  
 
   // ------------------ Render ------------------
   return (
@@ -109,13 +77,13 @@ const validateEpcs = async (epcs: string[]) => {
 
             <div className="grid grid-cols-12 gap-4 w-full">
               <div className="text-xl text-gray-800 p-5 bg-white/30 rounded-md text-center col-span-6">
-                {validatedTags.length > 0 ? (
+                {latestScans.length > 0 ? (
                   <>
                     Welcome{" "}
-                    {validatedTags.map((tag, idx) => (
+                    {latestScans.map((tag, idx) => (
                       <span key={tag.epc} className="font-semibold">
                         {tag.tag_name}
-                        {idx < validatedTags.length - 1 ? ", " : ""}
+                        {idx < latestScans.length - 1 ? ", " : ""}
                       </span>
                     ))}
                   </>

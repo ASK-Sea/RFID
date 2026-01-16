@@ -22,13 +22,6 @@ type RegisteredTagStat = {
   scan_count: number;
   last_seen: string | null;
 };
-type StatScan = {
-  EPC: string;
-  TID?: string;
-  RSSI?: number;
-  AntId?: string;
-  ReadTime?: string;
-};
 
 type ResetBaselines = Record<string, number>;
 
@@ -40,11 +33,13 @@ const TagManagement: React.FC = () => {
   const [newTagName, setNewTagName] = useState("");
   const [newPosition, setNewPosition] = useState("");
   const [newPurpose, setNewPurpose] = useState("");
-  const [useScanTables, setUseScanTables] = useState(false);
   const [registeredTagStats, setRegisteredTagStats] = useState<
     RegisteredTagStat[]
   >([]);
-  const [tagStreamScanStats, setTagStreamScanStats] = useState<StatScan[]>([]);
+  const [tagStreamScans, setTagStreamScans] = useState<any[]>(() => {
+    const saved = sessionStorage.getItem("tagStreamScans");
+    return saved ? JSON.parse(saved) : [];
+  });
   const [resetBaselines, setResetBaselines] = useState<ResetBaselines>(() => {
     const saved = localStorage.getItem("rfid_reset_baselines");
     return saved ? JSON.parse(saved) : {};
@@ -79,32 +74,6 @@ const TagManagement: React.FC = () => {
     );
   }, [stats, tagList]);
 
-  const loadTagStreamScan = async () => {
-    try {
-      const [tagsRes, statsRes] = await Promise.all([
-        axios.get<Tag[]>("http://localhost:5000/api/tags"),
-        axios.get<StatScan[]>("http://localhost:5000/api/stats-scan"),
-      ]);
-
-      const tags = tagsRes.data;
-      const scans = statsRes.data;
-
-      const merged = scans.map((scan) => {
-        const tag = tags.find((t) => t.epc === scan.EPC);
-        return {
-          ...scan,
-          tag_name: tag?.tag_name || "N/A",
-          purpose: tag?.purpose || "N/A",
-        };
-      });
-
-      setTagStreamScanStats(merged);
-    } catch (err) {
-      console.error("Failed to load Tag Stream:", err);
-      setTagStreamScanStats([]);
-    }
-  };
-
   // --- Send only Tag Stream data to Dashboard ---
   useEffect(() => {
     const selectedEpcs = Object.keys(selectedTags).filter(
@@ -112,6 +81,22 @@ const TagManagement: React.FC = () => {
     );
     localStorage.setItem("selectedTags", JSON.stringify(selectedEpcs));
   }, [selectedTags]);
+
+  // --- Listen for storage updates from App.tsx ---
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = sessionStorage.getItem("tagStreamScans");
+      if (saved) {
+        setTagStreamScans(JSON.parse(saved));
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
 
   // --- Helpers ---
   const formatTime = (datetime: string | null) => {
@@ -123,29 +108,7 @@ const TagManagement: React.FC = () => {
     });
   };
 
-  // --- Tag Stream Load stats and tags ---
-
-  useEffect(() => {
-    if (useScanTables) {
-      loadStatsScan();
-      intervalRef.current = setInterval(loadStatsScan, 3000);
-    } else {
-      loadTags();
-      loadStats();
-      intervalRef.current = setInterval(loadStats, 3000);
-    }
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [useScanTables]);
-
   // --- Tag Stream Load stream scan data ---
-
-  useEffect(() => {
-    loadTagStreamScan();
-    const interval = setInterval(loadTagStreamScan, 3000); // refresh every 3s
-    return () => clearInterval(interval);
-  }, []);
 
   const formatDate = (datetime: string | null) => {
     if (!datetime) return "";
@@ -171,18 +134,6 @@ const TagManagement: React.FC = () => {
   const loadStats = async () => {
     try {
       const res = await axios.get<Stat[]>("http://localhost:5000/api/stats");
-      setStats(res.data);
-    } catch {
-      setStats([]);
-    }
-  };
-
-  // --- API calls --- Stream stats
-  const loadStatsScan = async () => {
-    try {
-      const res = await axios.get<Stat[]>(
-        "http://localhost:5000/api/stats-scan"
-      );
       setStats(res.data);
     } catch {
       setStats([]);
@@ -399,7 +350,7 @@ const TagManagement: React.FC = () => {
               <h2 className="text-sm font-medium text-gray-900 mb-5">
                 Tag Stream
               </h2>
-              {tagStreamScanStats.length === 0 ? (
+              {tagStreamScans.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 text-sm">
                   No scan data available.
                 </div>
@@ -415,54 +366,23 @@ const TagManagement: React.FC = () => {
                           EPC
                         </th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          TID
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          RSSI
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          AntID
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Read Time
                         </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                      {tagStreamScanStats.map((tag) => (
-                        <tr key={tag.EPC}>
+                      {tagStreamScans.map((scan: any, idx: number) => (
+                        <tr key={`${scan.epc}-${idx}`}>
                           <td className="px-4 py-2 text-sm text-gray-900">
-                            {tag.tag_name}
+                            {scan.tag_name}
                           </td>
                           <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.EPC}
+                            {scan.epc}
                           </td>
                           <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.TID || "N/A"}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.RSSI}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.AntId}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.ReadTime
-                              ? new Date(tag.ReadTime).toLocaleString()
+                            {scan.read_time
+                              ? new Date(scan.read_time).toLocaleString()
                               : "Not scanned yet"}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <input
-                              type="checkbox"
-                              checked={!!selectedTags[tag.EPC]}
-                              onChange={(e) =>
-                                setSelectedTags({
-                                  ...selectedTags,
-                                  [tag.EPC]: e.target.checked,
-                                })
-                              }
-                              className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                            />
                           </td>
                         </tr>
                       ))}

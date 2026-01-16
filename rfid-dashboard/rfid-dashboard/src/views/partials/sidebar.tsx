@@ -12,6 +12,12 @@ const Sidebar = () => {
         <li>
           <Link to="/tagmanagement">Tag Management</Link>
         </li>
+        <li>
+          <Link to="/setting">Setting</Link>
+        </li>
+        <li>
+          <Link to="/themes">Themes</Link>
+        </li>
       </ul>
     </div>
   );
