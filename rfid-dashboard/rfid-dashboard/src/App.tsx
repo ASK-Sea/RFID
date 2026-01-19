@@ -1,12 +1,13 @@
 import React, { useEffect } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { io } from "socket.io-client";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Dashboard from "./views/admin/Dashboard";
 import TagManagement from "./views/admin/TagManagement";
 import Setting from "./views/admin/Setting";
 import Themes from "./views/admin/Themes";
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   // Global Socket.IO connection - receives MQTT data on all pages
   useEffect(() => {
     const socket = io("http://localhost:5000");
@@ -62,6 +63,14 @@ const App: React.FC = () => {
         <Route path="/" element={<Dashboard />} />
       </Routes>
     </Router>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 };
 

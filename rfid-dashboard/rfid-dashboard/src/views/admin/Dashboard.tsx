@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
 import { Header, Sidebar, bgImage } from "./import";
 
 // --- Types ---
 type SelectedTag = { epc: string; tag_name: string };
 
 const Dashboard: React.FC = () => {
+  const { theme } = useTheme();
   const [currentDateTime, setCurrentDateTime] = useState({
     date: "",
     time: "",
@@ -40,21 +42,37 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ------------------ Listen for storage updates from App.tsx ------------------
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = sessionStorage.getItem("latestScans");
-      if (saved) {
-        setLatestScans(JSON.parse(saved));
-      }
+  // Get element styles with fallback
+  const getTitleStyle = () =>
+    theme.elements.title || {
+      backgroundColor: "rgba(255, 255, 255, 0.4)",
+      color: "#111827",
+      fontSize: "1.875rem",
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
+  const getSubtitleStyle = () =>
+    theme.elements.subtitle || {
+      backgroundColor: "rgba(255, 255, 255, 0.3)",
+      color: "#1f2937",
+      fontSize: "1.25rem",
     };
-  }, []);
+
+  const getWelcomeStyle = () =>
+    theme.elements.welcome || {
+      backgroundColor: "rgba(255, 255, 255, 0.3)",
+      color: "#1f2937",
+      fontSize: "1.25rem",
+    };
+
+  const getDateStyle = () =>
+    theme.elements.date || {
+      backgroundColor: "transparent",
+      color: "#1f2937",
+      fontSize: "1rsem",
+    };
+
+  // Get date element styles with safe access
+  const dateElementStyle = getDateStyle();
 
   // ------------------ Render ------------------
   return (
@@ -64,19 +82,45 @@ const Dashboard: React.FC = () => {
         <Sidebar />
         <main
           className="flex-1 p-6 bg-cover bg-center"
-          style={{ backgroundImage: `url(${bgImage})` }}
+          style={{
+            backgroundImage: theme.backgroundImage
+              ? `url(${theme.backgroundImage})`
+              : `url(${bgImage})`,
+            backgroundColor: theme.backgroundColor,
+          }}
         >
           <div className="container mx-auto p-6 flex flex-col items-center space-y-6">
-            <div className="text-3xl font-semibold text-gray-900 p-3 bg-white/40 rounded-md">
+            <div
+              className="p-3 rounded-md"
+              style={{
+                backgroundColor: getTitleStyle().backgroundColor,
+                color: getTitleStyle().color,
+                fontSize: getTitleStyle().fontSize,
+              }}
+            >
               Welcome to CLB Groups Sdn Bhd
             </div>
 
-            <div className="text-xl text-gray-800 p-2 bg-white/30 rounded-md text-center">
+            <div
+              className="p-2 rounded-md text-center"
+              style={{
+                backgroundColor: getSubtitleStyle().backgroundColor,
+                color: getSubtitleStyle().color,
+                fontSize: getSubtitleStyle().fontSize,
+              }}
+            >
               Get Started on your dashboard and manage your RFID Tags
             </div>
 
             <div className="grid grid-cols-12 gap-4 w-full">
-              <div className="text-xl text-gray-800 p-5 bg-white/30 rounded-md text-center col-span-6">
+              <div
+                className="p-5 rounded-md text-center col-span-6"
+                style={{
+                  backgroundColor: getWelcomeStyle().backgroundColor,
+                  color: getWelcomeStyle().color,
+                  fontSize: getWelcomeStyle().fontSize,
+                }}
+              >
                 {latestScans.length > 0 ? (
                   <>
                     Welcome{" "}
@@ -92,11 +136,28 @@ const Dashboard: React.FC = () => {
                 )}
               </div>
 
-              <div className="col-span-6 p-4 bg-white/30 rounded-md text-center">
-                <div className="text-xl font-semibold text-gray-900">
+              <div
+                className="col-span-6 p-4 rounded-md text-center"
+                style={{
+                  backgroundColor: getWelcomeStyle().backgroundColor,
+                  color: getWelcomeStyle().color,
+                  fontSize: getWelcomeStyle().fontSize,
+                }}
+              >
+                <div
+                  style={{
+                    color: getSubtitleStyle().color,
+                    fontSize: getSubtitleStyle().fontSize,
+                  }}
+                  className="font-semibold"
+                ></div>
+                <div className="font-semibold"
+                  style={{
+                    color: dateElementStyle.color,
+                    fontSize: dateElementStyle.fontSize,
+                  }}
+                >
                   {currentDateTime.date}
-                </div>
-                <div className="text-lg text-gray-900">
                   {currentDateTime.time}
                 </div>
               </div>

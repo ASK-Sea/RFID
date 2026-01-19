@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useTheme } from "../../contexts/ThemeContext";
 import { Header, Sidebar, bgImage } from "./import";
 
 // --- Types ---
@@ -27,6 +28,7 @@ type ResetBaselines = Record<string, number>;
 
 // --- Component ---
 const TagManagement: React.FC = () => {
+  const { theme } = useTheme();
   const [stats, setStats] = useState<Stat[]>([]);
   const [tagList, setTagList] = useState<Tag[]>([]);
   const [newEpc, setNewEpc] = useState("");
@@ -199,7 +201,10 @@ const TagManagement: React.FC = () => {
         <Sidebar />
         <main
           className="flex-1 p-4 bg-gray-50 overflow-auto"
-          style={{ backgroundImage: `url(${bgImage})` }}
+          style={{
+            backgroundImage: theme.backgroundImage ? `url(${theme.backgroundImage})` : `url(${bgImage})`,
+            backgroundColor: theme.backgroundColor,
+          }}
         >
           <div className="max-w-7xl mx-auto space-y-6">
             {/* Header */}

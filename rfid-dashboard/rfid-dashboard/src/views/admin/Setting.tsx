@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
+import { useTheme } from "../../contexts/ThemeContext";
 import { Header, Sidebar, bgImage } from "./import";
 
 const Setting: React.FC = () => {
+  const { theme } = useTheme();
   const [name, setName] = useState("");
   const [protocol, setProtocol] = useState("mqtt://");
   const [host, setHost] = useState("");
@@ -31,7 +33,10 @@ const Setting: React.FC = () => {
         <Sidebar />
         <main
           className="flex-1 p-6 bg-cover bg-center"
-          style={{ backgroundImage: `url(${bgImage})` }}
+          style={{
+            backgroundImage: theme.backgroundImage ? `url(${theme.backgroundImage})` : `url(${bgImage})`,
+            backgroundColor: theme.backgroundColor,
+          }}
         >
           <div className="container mx-auto p-6">
             <h2 className="text-2xl font-bold mb-6 text-gray-900">MQTT Settings</h2>
