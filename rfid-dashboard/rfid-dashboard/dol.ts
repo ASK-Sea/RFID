@@ -442,7 +442,7 @@ async function loadData(): Promise<void> {
 
 // Load tags
 async function loadTags(): Promise<void> {
-  const res = await axios.get<Tag[]>("http://localhost:5000/api/tags");
+  const res = await axios.get<Tag[]>("http://localhost:5001/api/tags");
   tagList.value = res.data;
   updateRegisteredTagStats();
 }
@@ -465,7 +465,7 @@ function updateRegisteredTagStats(): void {
 async function saveTagName(): Promise<void> {
   if (!newEpc.value || !newTagName.value) return;
 
-  await axios.post("http://localhost:5000/api/tags", {
+  await axios.post("http://localhost:5001/api/tags", {
     epc: newEpc.value,
     tag_name: newTagName.value,
   });
@@ -483,7 +483,7 @@ async function deleteTag(epc: string): Promise<void> {
   }
   
   try {
-    await axios.delete(`http://localhost:5000/api/tags/${epc}`);
+    await axios.delete(`http://localhost:5001/api/tags/${epc}`);
     
     // Also remove reset baseline for this tag
     delete resetBaselines.value[epc];

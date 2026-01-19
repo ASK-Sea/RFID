@@ -1,15 +1,29 @@
 const mqtt = require('mqtt');
 const db = require('./db');
 
-function startMQTT(io) {
-  const client = mqtt.connect(process.env.MQTT_HOST);
+let autoClient = null;
 
-  client.on('connect', () => {
+function startMQTT(io) {
+  autoClient = mqtt.connect(process.env.MQTT_HOST);
+
+  autoClient.on('connect', () => {
     console.log('MQTT connected');
-    client.subscribe(process.env.MQTT_TOPIC);
+    autoClient.subscribe(process.env.MQTT_TOPIC);
+    // Emit connection status to all connected clients
+    io.emit('mqtt-status', { connected: true });
   });
 
-  client.on('message', async (topic, message) => {
+  autoClient.on('disconnect', () => {
+    console.log('MQTT disconnected');
+    io.emit('mqtt-status', { connected: false });
+  });
+
+  autoClient.on('error', (err) => {
+    console.error('MQTT error:', err.message);
+    io.emit('mqtt-status', { connected: false });
+  });
+
+  autoClient.on('message', async (topic, message) => {
     try {
       const data = JSON.parse(message.toString());
       const epc = data.EPC;
@@ -67,4 +81,9 @@ function startMQTT(io) {
   });
 }
 
+function isAutoMQTTConnected() {
+  return autoClient && autoClient.connected;
+}
+
 module.exports = startMQTT;
+module.exports.isAutoMQTTConnected = isAutoMQTTConnected;

@@ -164,5 +164,8 @@ router.delete("/tags/:epc", (req, res) => {
 // 7️⃣ Removed: Fetch all tag stream data FROM SCAN TABLES
 // 8️⃣ Removed: Fetch EPC statistics FROM SCAN TABLES
 
+// MQTT Routes
+const mqttControl = require("./mqttControl");
+router.use("/mqtt", mqttControl);
 
 module.exports = router;

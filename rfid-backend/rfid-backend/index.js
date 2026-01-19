@@ -16,6 +16,9 @@ const io = new Server(server, {
   }
 });
 
+// Store io instance for use in routes
+app.set('io', io);
+
 app.use(cors());
 app.use(express.json());
 
@@ -31,8 +34,9 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start MQTT listener with Socket.IO
-startMQTT(io);
+// Start MQTT listener with Socket.IO - this also stores the client status
+const mqttStatus = startMQTT(io);
+app.set('mqttStatus', mqttStatus);
 
 // Start express server
 const PORT = process.env.PORT || 5000;

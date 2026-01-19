@@ -98,7 +98,7 @@ const Dashboard: React.FC = () => {
                 fontSize: getTitleStyle().fontSize,
               }}
             >
-              Welcome to CLB Groups Sdn Bhd
+              Welcome to CLB Holdings6 Berhard
             </div>
 
             <div

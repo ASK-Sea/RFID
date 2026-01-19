@@ -21,7 +21,7 @@ const Header: React.FC = () => {
             {/* Brand Text */}
             <div className="flex flex-col">
               <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-white drop-shadow-lg tracking-tight">
-                CLB Sdn Bhd
+                CLB Holdings Berhard
               </span>
               <span className="hidden sm:flex text-xs sm:text-sm text-blue-100 font-medium mt-1 items-center gap-2">
                 <span className="bi bi-thermometer-snow"></span>

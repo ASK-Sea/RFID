@@ -10,7 +10,7 @@ import Themes from "./views/admin/Themes";
 const AppContent: React.FC = () => {
   // Global Socket.IO connection - receives MQTT data on all pages
   useEffect(() => {
-    const socket = io("http://localhost:5000");
+    const socket = io("http://localhost:5001");
 
     socket.on("connect", () => {
       console.log("[App] Connected to Socket.IO server");
