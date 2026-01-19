@@ -49,6 +49,12 @@ const TagManagement: React.FC = () => {
   const [selectedTags, setSelectedTags] = useState<Record<string, boolean>>({});
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Pagination states
+  const [tagListPage, setTagListPage] = useState(1);
+  const [tagStreamPage, setTagStreamPage] = useState(1);
+  const [countPage, setCountPage] = useState(1);
+  const itemsPerPage = 10;
+
   // --- Load tags and stats ---
   useEffect(() => {
     loadTags();
@@ -130,6 +136,67 @@ const TagManagement: React.FC = () => {
     const newBaselines = { ...resetBaselines, [epc]: currentCount };
     setResetBaselines(newBaselines);
     localStorage.setItem("rfid_reset_baselines", JSON.stringify(newBaselines));
+  };
+
+  // Pagination helper
+  const getPaginatedData = (data: any[], page: number, perPage: number) => {
+    const startIndex = (page - 1) * perPage;
+    return data.slice(startIndex, startIndex + perPage);
+  };
+
+  const getTotalPages = (dataLength: number, perPage: number) => {
+    return Math.ceil(dataLength / perPage);
+  };
+
+  // Pagination component
+  const PaginationControls = ({
+    currentPage,
+    totalPages,
+    onPageChange,
+  }: {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  }) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-gray-200">
+        <button
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage === 1}
+          className="px-3 py-1 rounded text-sm font-medium bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Previous
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => onPageChange(page)}
+            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+              currentPage === page
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 hover:bg-gray-200"
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage === totalPages}
+          className="px-3 py-1 rounded text-sm font-medium bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          Next
+        </button>
+
+        <span className="text-xs text-gray-500 ml-4">
+          Page {currentPage} of {totalPages}
+        </span>
+      </div>
+    );
   };
 
   // --- API calls --- List stats
@@ -289,64 +356,78 @@ const TagManagement: React.FC = () => {
                   No tags available. Add tags above to see them here.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tag Name
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          EPC
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Position
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Purpose of Visit
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Time
-                        </th>
-                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          {" "}
-                          -{" "}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {registeredTagStats.map((tag) => (
-                        <tr key={tag.epc}>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {tag.tag_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.epc}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.position || "N/A"}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.purpose || "N/A"}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {tag.last_seen
-                              ? new Date(tag.last_seen).toLocaleString()
-                              : "Not scanned yet"}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button
-                              onClick={() => deleteTag(tag.epc)}
-                              className="text-gray-400 hover:text-red-500 transition-colors text-xs font-medium px-3 py-1 rounded hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tag Name
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            EPC
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Position
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Purpose of Visit
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Time
+                          </th>
+                          <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            {" "}
+                            -{" "}
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getPaginatedData(
+                          registeredTagStats,
+                          tagListPage,
+                          itemsPerPage
+                        ).map((tag) => (
+                          <tr key={tag.epc}>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {tag.tag_name}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {tag.epc}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {tag.position || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {tag.purpose || "N/A"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {tag.last_seen
+                                ? new Date(tag.last_seen).toLocaleString()
+                                : "Not scanned yet"}
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <button
+                                onClick={() => deleteTag(tag.epc)}
+                                className="text-gray-400 hover:text-red-500 transition-colors text-xs font-medium px-3 py-1 rounded hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationControls
+                    currentPage={tagListPage}
+                    totalPages={getTotalPages(
+                      registeredTagStats.length,
+                      itemsPerPage
+                    )}
+                    onPageChange={setTagListPage}
+                  />
+                </>
               )}
             </div>
 
@@ -360,40 +441,51 @@ const TagManagement: React.FC = () => {
                   No scan data available.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tag Name
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          EPC
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Read Time
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {tagStreamScans.map((scan: any, idx: number) => (
-                        <tr key={`${scan.epc}-${idx}`}>
-                          <td className="px-4 py-2 text-sm text-gray-900">
-                            {scan.tag_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {scan.epc}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {scan.read_time
-                              ? new Date(scan.read_time).toLocaleString()
-                              : "Not scanned yet"}
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tag Name
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            EPC
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Read Time
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getPaginatedData(
+                          tagStreamScans,
+                          tagStreamPage,
+                          itemsPerPage
+                        ).map((scan: any, idx: number) => (
+                          <tr key={`${scan.epc}-${idx}`}>
+                            <td className="px-4 py-2 text-sm text-gray-900">
+                              {scan.tag_name}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {scan.epc}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {scan.read_time
+                                ? new Date(scan.read_time).toLocaleString()
+                                : "Not scanned yet"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationControls
+                    currentPage={tagStreamPage}
+                    totalPages={getTotalPages(tagStreamScans.length, itemsPerPage)}
+                    onPageChange={setTagStreamPage}
+                  />
+                </>
               )}
             </div>
 
@@ -408,91 +500,105 @@ const TagManagement: React.FC = () => {
                   statistics here.
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tag Name
-                        </th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          EPC
-                        </th>
-                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Current Count
-                        </th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Last Scanned
-                        </th>
-                        <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {registeredTagStats.map((stat) => (
-                        <tr
-                          key={stat.epc}
-                          className="hover:bg-gray-50 transition-colors"
-                        >
-                          <td className="px-4 py-2 text-sm font-medium text-gray-900">
-                            {stat.tag_name}
-                          </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
-                            {stat.epc}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                              <span className="inline-flex items-center justify-center w-10 h-10 bg-purple-50 text-purple-600 rounded-full text-sm font-semibold">
-                                {getAdjustedCount(
-                                  stat.epc,
-                                  stat.scan_count || 0
-                                )}
-                              </span>
-                              {resetBaselines[stat.epc] && (
-                                <span className="text-xs text-gray-400">
-                                  (Total: {stat.scan_count || 0})
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 text-right text-sm text-gray-500">
-                            {stat.last_seen ? (
-                              <>
-                                <div className="text-xs text-gray-700">
-                                  {formatDate(stat.last_seen)}
-                                </div>
-                                <div className="text-xs text-gray-400 mt-0.5">
-                                  {formatTime(stat.last_seen)}
-                                </div>
-                              </>
-                            ) : (
-                              <div className="text-xs text-gray-400">
-                                Not scanned yet
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <button
-                              onClick={() =>
-                                resetCount(stat.epc, stat.scan_count || 0)
-                              }
-                              className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${
-                                resetBaselines[stat.epc]
-                                  ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
-                                  : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                              }`}
-                            >
-                              {resetBaselines[stat.epc]
-                                ? "Reset Again"
-                                : "Reset Count"}
-                            </button>
-                          </td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Tag Name
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            EPC
+                          </th>
+                          <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Current Count
+                          </th>
+                          <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Last Scanned
+                          </th>
+                          <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Actions
+                          </th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {getPaginatedData(
+                          registeredTagStats,
+                          countPage,
+                          itemsPerPage
+                        ).map((stat) => (
+                          <tr
+                            key={stat.epc}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                              {stat.tag_name}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {stat.epc}
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <div className="flex flex-col items-center gap-1">
+                                <span className="inline-flex items-center justify-center w-10 h-10 bg-purple-50 text-purple-600 rounded-full text-sm font-semibold">
+                                  {getAdjustedCount(
+                                    stat.epc,
+                                    stat.scan_count || 0
+                                  )}
+                                </span>
+                                {resetBaselines[stat.epc] && (
+                                  <span className="text-xs text-gray-400">
+                                    (Total: {stat.scan_count || 0})
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-2 text-right text-sm text-gray-500">
+                              {stat.last_seen ? (
+                                <>
+                                  <div className="text-xs text-gray-700">
+                                    {formatDate(stat.last_seen)}
+                                  </div>
+                                  <div className="text-xs text-gray-400 mt-0.5">
+                                    {formatTime(stat.last_seen)}
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="text-xs text-gray-400">
+                                  Not scanned yet
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <button
+                                onClick={() =>
+                                  resetCount(stat.epc, stat.scan_count || 0)
+                                }
+                                className={`text-xs font-medium px-3 py-1.5 rounded transition-colors ${
+                                  resetBaselines[stat.epc]
+                                    ? "bg-orange-50 text-orange-600 hover:bg-orange-100"
+                                    : "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                                }`}
+                              >
+                                {resetBaselines[stat.epc]
+                                  ? "Reset Again"
+                                  : "Reset Count"}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <PaginationControls
+                    currentPage={countPage}
+                    totalPages={getTotalPages(
+                      registeredTagStats.length,
+                      itemsPerPage
+                    )}
+                    onPageChange={setCountPage}
+                  />
+                </>
               )}
             </div>
           </div>
