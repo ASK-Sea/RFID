@@ -1,28 +1,6 @@
-import { React, useEffect, useRef, useState, useCallback } from "./import";
-import { axios, useTheme, Header, Sidebar, bgImage } from "./import";
-
-// --- Types ---
-type Stat = {
-  epc: string;
-  scan_count: number;
-  last_seen: string | null;
-};
-type Tag = {
-  epc: string;
-  tag_name: string;
-  position: string;
-  purpose: string;
-};
-type RegisteredTagStat = {
-  epc: string;
-  tag_name: string;
-  position: string;
-  purpose: string;
-  scan_count: number;
-  last_seen: string | null;
-};
-
-type ResetBaselines = Record<string, number>;
+import { React, useEffect, useRef, useState, useCallback } from "../../import";
+import { axios, useTheme, Header, Sidebar, bgImage } from "../../import";
+import { Stat, Tag, RegisteredTagStat, ResetBaselines } from "../../types";
 
 // --- Component ---
 const TagManagement: React.FC = () => {

@@ -1,8 +1,6 @@
-import { React, useState, useEffect } from "./import";
-import { useTheme, Header, Sidebar, bgImage } from "./import";
-
-// --- Types ---
-type SelectedTag = { epc: string; tag_name: string };
+import { React, useState, useEffect } from "../../import";
+import { useTheme, Header, Sidebar, bgImage } from "../../import";
+import { SelectedTag } from "../../types";
 
 const Dashboard: React.FC = () => {
   const { theme } = useTheme();

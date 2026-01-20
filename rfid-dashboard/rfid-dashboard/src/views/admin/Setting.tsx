@@ -1,5 +1,5 @@
-import { React, useState, useEffect } from "./import";
-import { axios, io, Socket, useTheme, Header, Sidebar, bgImage } from "./import";
+import { React, useState, useEffect } from "../../import";
+import { axios, io, Socket, useTheme, Header, Sidebar, bgImage } from "../../import";
 
 const Setting: React.FC = () => {
   const { theme } = useTheme();
