@@ -1,0 +1,86 @@
+/* Dashboard Page Styles - Module Specific */
+
+.container {
+  composes: global-container from '../../style.css';
+}
+
+.mainWrapper {
+  composes: global-main-wrapper from '../../style.css';
+}
+
+.mainContent {
+  composes: global-main-content from '../../style.css';
+}
+
+.innerContainer {
+  composes: global-inner-container from '../../style.css';
+}
+
+.dateTimeCard {
+  composes: global-card from '../../style.css';
+  margin-bottom: var(--spacing-xl);
+}
+
+.dateTimeContent {
+  text-align: center;
+}
+
+.dateText {
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+}
+
+.timeText {
+  font-size: 2rem;
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+}
+
+.chartsWrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.chartCard {
+  composes: global-card from '../../style.css';
+  min-height: 300px;
+}
+
+.chartTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-700);
+  margin-bottom: var(--spacing-lg);
+}
+
+.latestScansCard {
+  composes: global-card from '../../style.css';
+}
+
+.scansTable {
+  composes: global-table from '../../style.css';
+}
+
+.scansTable th {
+  text-align: left;
+  padding: var(--spacing-md);
+  background-color: var(--color-gray-100);
+  font-weight: 600;
+  color: var(--color-gray-700);
+  border-bottom: 2px solid var(--color-gray-200);
+}
+
+.scansTable td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.scansTable tbody tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+.emptyState {
+  composes: global-empty-state from '../../style.css';
+}

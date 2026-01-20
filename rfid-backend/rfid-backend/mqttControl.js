@@ -1,11 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { connectMQTT, disconnectMQTT, isConnected } = require("./mqttManager");
-const { isAutoMQTTConnected } = require("./mqtt");
+const { isAutoMQTTConnected, stopAutoMQTT, restartAutoMQTT } = require("./mqtt");
 
 let savedConfig = null;
 
 router.post("/save", (req, res) => {
+  if (!req.body || Object.keys(req.body).length === 0) {
+    return res.status(400).json({ error: "No configuration data provided" });
+  }
+  
   savedConfig = req.body;
   console.log("MQTT config saved:", { 
     name: savedConfig.name,
@@ -15,19 +19,37 @@ router.post("/save", (req, res) => {
     clientId: savedConfig.clientId,
     password: "***"
   });
-  res.json({ success: true });
+  res.json({ success: true, message: "Configuration saved successfully" });
 });
 
 router.post("/connect", (req, res) => {
   if (!savedConfig) {
     return res.status(400).json({ error: "No MQTT config saved" });
   }
-  connectMQTT(savedConfig, req.app.get("io"));
+  
+  const io = req.app.get("io");
+  console.log("Connect request received, restarting MQTT with saved config");
+  
+  // Connect managed connection
+  connectMQTT(savedConfig, io);
+  
+  // Restart auto connection
+  restartAutoMQTT(io);
+  
   res.json({ connected: true });
 });
 
 router.post("/disconnect", (req, res) => {
-  disconnectMQTT(req.app.get("io"));
+  const io = req.app.get("io");
+  console.log("Disconnect request received");
+  
+  // Disconnect managed connection
+  disconnectMQTT(io);
+  
+  // Disconnect auto connection to fully disconnect MQTT
+  stopAutoMQTT(io);
+  
+  console.log("Both managed and auto MQTT disconnected");
   res.json({ connected: false });
 });
 

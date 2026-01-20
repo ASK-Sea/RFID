@@ -85,5 +85,29 @@ function isAutoMQTTConnected() {
   return autoClient && autoClient.connected;
 }
 
+function stopAutoMQTT(io) {
+  if (autoClient) {
+    autoClient.end(true, () => {
+      console.log("Auto MQTT disconnected");
+      autoClient = null;
+      if (io) {
+        io.emit('mqtt-status', { connected: false });
+      }
+    });
+  }
+}
+
+function restartAutoMQTT(io) {
+  console.log("Restarting auto MQTT connection");
+  stopAutoMQTT(io);
+  
+  // Restart with environment variables
+  setTimeout(() => {
+    startMQTT(io);
+  }, 1000);
+}
+
 module.exports = startMQTT;
 module.exports.isAutoMQTTConnected = isAutoMQTTConnected;
+module.exports.stopAutoMQTT = stopAutoMQTT;
+module.exports.restartAutoMQTT = restartAutoMQTT;

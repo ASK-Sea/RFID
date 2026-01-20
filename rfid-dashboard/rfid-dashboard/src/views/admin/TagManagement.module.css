@@ -1,0 +1,115 @@
+/* Tag Management Page Styles - Module Specific */
+
+.container {
+  composes: global-container from '../../style.css';
+}
+
+.mainWrapper {
+  composes: global-main-wrapper from '../../style.css';
+}
+
+.mainContent {
+  composes: global-main-content from '../../style.css';
+}
+
+.innerContainer {
+  composes: global-inner-container from '../../style.css';
+}
+
+.card {
+  composes: global-card from '../../style.css';
+  margin-bottom: var(--spacing-xl);
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--color-gray-900);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.formGrid {
+  composes: global-form-grid from '../../style.css';
+}
+
+.formGroup {
+  composes: global-form-group from '../../style.css';
+}
+
+.formLabel {
+  composes: global-form-label from '../../style.css';
+}
+
+.inputField {
+  composes: global-input-field from '../../style.css';
+  font-size: 0.875rem;
+}
+
+.buttonGroup {
+  composes: global-flex from '../../style.css';
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+.button {
+  composes: global-button from '../../style.css';
+}
+
+.primaryBtn {
+  composes: global-button-primary from '../../style.css';
+}
+
+.dangerBtn {
+  composes: global-button-danger from '../../style.css';
+}
+
+.table {
+  composes: global-table from '../../style.css';
+}
+
+.table th {
+  text-align: left;
+  padding: var(--spacing-md);
+  background-color: var(--color-gray-100);
+  font-weight: 600;
+  color: var(--color-gray-700);
+  border-bottom: 2px solid var(--color-gray-200);
+}
+
+.table td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-gray-50);
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.emptyState {
+  composes: global-empty-state from '../../style.css';
+}
+
+.badge {
+  composes: global-badge from '../../style.css';
+}
+
+.badgeSuccess {
+  composes: global-badge-success from '../../style.css';
+}
+
+.badgeWarning {
+  composes: global-badge-warning from '../../style.css';
+}
+
+.badgeDanger {
+  composes: global-badge-danger from '../../style.css';
+}

@@ -1,7 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { useTheme } from "../../contexts/ThemeContext";
-import { Header, Sidebar, bgImage } from "./import";
+import { React, useEffect, useRef, useState, useCallback } from "./import";
+import { axios, useTheme, Header, Sidebar, bgImage } from "./import";
 
 // --- Types ---
 type Stat = {

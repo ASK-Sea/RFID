@@ -1,0 +1,183 @@
+/* Themes Page Styles - Module Specific */
+
+.container {
+  composes: global-container from '../../style.css';
+}
+
+.mainWrapper {
+  composes: global-main-wrapper from '../../style.css';
+}
+
+.mainContent {
+  composes: global-main-content from '../../style.css';
+}
+
+.innerContainer {
+  composes: global-inner-container from '../../style.css';
+  background-color: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+.pageTitle {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: var(--color-gray-900);
+  margin-bottom: var(--spacing-xl);
+}
+
+.tabsWrapper {
+  composes: global-flex from '../../style.css';
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xl);
+  border-bottom: 2px solid var(--color-gray-300);
+}
+
+.tabButton {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  margin-bottom: -2px;
+}
+
+.tabButton:hover {
+  color: var(--color-gray-700);
+}
+
+.tabButton.active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.tabContent {
+  padding: var(--spacing-xl) 0;
+}
+
+.formGroup {
+  margin-bottom: var(--spacing-xl);
+}
+
+.label {
+  composes: global-form-label from '../../style.css';
+}
+
+.input {
+  composes: global-input-field from '../../style.css';
+  max-width: 300px;
+}
+
+.colorInput {
+  width: 100%;
+  height: 40px;
+  cursor: pointer;
+  max-width: 150px;
+}
+
+.previewBox {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-gray-300);
+}
+
+.previewLabel {
+  font-size: 0.75rem;
+  color: var(--color-gray-400);
+  margin-bottom: var(--spacing-sm);
+}
+
+.previewText {
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-weight: 500;
+}
+
+.uploadSection {
+  border: 2px dashed var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadSection:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.uploadText {
+  color: var(--color-gray-600);
+  font-size: 0.875rem;
+  margin-bottom: var(--spacing-lg);
+}
+
+.fileInput {
+  display: none;
+}
+
+.button {
+  composes: global-button from '../../style.css';
+}
+
+.primaryBtn {
+  composes: global-button-primary from '../../style.css';
+}
+
+.dangerBtn {
+  composes: global-button-danger from '../../style.css';
+}
+
+.successBtn {
+  composes: global-button-success from '../../style.css';
+}
+
+.message {
+  composes: global-message from '../../style.css';
+}
+
+.message.success {
+  composes: global-message-success from '../../style.css';
+}
+
+.message.error {
+  composes: global-message-error from '../../style.css';
+}
+
+.selectField {
+  composes: global-input-field from '../../style.css';
+  background-color: white;
+  cursor: pointer;
+}
+
+.elementGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-lg);
+}
+
+.elementOption {
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.elementOption:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
+
+.elementOption.active {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}

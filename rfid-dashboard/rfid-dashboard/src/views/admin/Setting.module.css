@@ -1,0 +1,111 @@
+/* Setting Page Styles - Module Specific */
+
+/* Override or extend global classes as needed */
+.container {
+  composes: global-container from '../../style.css';
+}
+
+.mainWrapper {
+  composes: global-main-wrapper from '../../style.css';
+}
+
+.mainContent {
+  composes: global-main-content from '../../style.css';
+}
+
+.innerContainer {
+  composes: global-inner-container from '../../style.css';
+}
+
+.headerBox {
+  composes: global-card-header from '../../style.css';
+}
+
+.headerTitle {
+  composes: global-card-title from '../../style.css';
+}
+
+.messageBox {
+  composes: global-message from '../../style.css';
+}
+
+.messageBox.error {
+  composes: global-message-error from '../../style.css';
+}
+
+.messageBox.success {
+  composes: global-message-success from '../../style.css';
+}
+
+.statusBox {
+  composes: global-status-box from '../../style.css';
+}
+
+.statusBox.connected {
+  composes: global-status-connected from '../../style.css';
+}
+
+.statusBox.disconnected {
+  composes: global-status-disconnected from '../../style.css';
+}
+
+.settingsTable {
+  composes: global-card from '../../style.css';
+  overflow: hidden;
+}
+
+.tableRow {
+  border-bottom: 1px solid var(--color-gray-200);
+}
+
+.tableCell {
+  padding: var(--spacing-xl);
+}
+
+.tableLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+  width: 25%;
+}
+
+.inputField {
+  composes: global-input-field from '../../style.css';
+}
+
+.protocolSelect {
+  composes: global-input-field from '../../style.css';
+}
+
+.hostInputWrapper {
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.hostInputWrapper .inputField {
+  flex: 1;
+}
+
+.buttonsWrapper {
+  composes: global-flex from '../../style.css';
+  padding: var(--spacing-xl);
+  background-color: var(--color-gray-50);
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+}
+
+.button {
+  composes: global-button from '../../style.css';
+}
+
+.disconnectBtn {
+  composes: global-button-danger from '../../style.css';
+}
+
+.connectBtn {
+  composes: global-button-success from '../../style.css';
+}
+
+.saveBtn {
+  composes: global-button-primary from '../../style.css';
+}

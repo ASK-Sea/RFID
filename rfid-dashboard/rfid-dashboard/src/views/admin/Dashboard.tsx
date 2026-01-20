@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useTheme } from "../../contexts/ThemeContext";
-import { Header, Sidebar, bgImage } from "./import";
+import { React, useState, useEffect } from "./import";
+import { useTheme, Header, Sidebar, bgImage } from "./import";
 
 // --- Types ---
 type SelectedTag = { epc: string; tag_name: string };

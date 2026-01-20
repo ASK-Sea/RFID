@@ -1,8 +1,5 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { io, Socket } from "socket.io-client";
-import { useTheme } from "../../contexts/ThemeContext";
-import { Header, Sidebar, bgImage } from "./import";
+import { React, useState, useEffect } from "./import";
+import { axios, io, Socket, useTheme, Header, Sidebar, bgImage } from "./import";
 
 const Setting: React.FC = () => {
   const { theme } = useTheme();
@@ -17,6 +14,7 @@ const Setting: React.FC = () => {
   const [mqttStatus, setMqttStatus] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
+  const [connectionLoading, setConnectionLoading] = useState(false);
 
   // Load saved config and check MQTT status on mount
   useEffect(() => {
@@ -100,11 +98,14 @@ const Setting: React.FC = () => {
       password,
     };
     
+    console.log("Attempting to save settings:", settings);
+    
     try {
       setSaveMessage("Saving configuration...");
       
       // Save to backend
-      await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      const response = await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      console.log("Save response:", response.data);
       
       // Save to localStorage
       localStorage.setItem("mqttConfig", JSON.stringify(settings));
@@ -112,13 +113,52 @@ const Setting: React.FC = () => {
       setSaveMessage("Configuration saved successfully!");
       
       // Check MQTT status after saving
+      setTimeout(() => checkMqttStatus(), 500);
+      
+      setTimeout(() => setSaveMessage(""), 3000);
+    } catch (error: any) {
+      console.error("Failed to save settings:", error);
+      setSaveMessage(`Error: ${error.response?.data?.error || error.message}`);
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      setConnectionLoading(true);
+      setSaveMessage("Connecting to MQTT...");
+      
+      const response = await axios.post("http://localhost:5001/api/mqtt/connect");
+      
+      setSaveMessage("MQTT connected successfully!");
       await checkMqttStatus();
       
       setTimeout(() => setSaveMessage(""), 3000);
-      console.log("Settings saved:", settings);
+      console.log("MQTT connected:", response.data);
     } catch (error: any) {
-      setSaveMessage(`Error: ${error.response?.data?.error || error.message}`);
-      console.error("Failed to save settings:", error);
+      setSaveMessage(`Error connecting: ${error.response?.data?.error || error.message}`);
+      console.error("Failed to connect MQTT:", error);
+    } finally {
+      setConnectionLoading(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      setConnectionLoading(true);
+      setSaveMessage("Disconnecting from MQTT...");
+      
+      const response = await axios.post("http://localhost:5001/api/mqtt/disconnect");
+      
+      setSaveMessage("MQTT disconnected successfully!");
+      await checkMqttStatus();
+      
+      setTimeout(() => setSaveMessage(""), 3000);
+      console.log("MQTT disconnected:", response.data);
+    } catch (error: any) {
+      setSaveMessage(`Error disconnecting: ${error.response?.data?.error || error.message}`);
+      console.error("Failed to disconnect MQTT:", error);
+    } finally {
+      setConnectionLoading(false);
     }
   };
 
@@ -264,7 +304,21 @@ const Setting: React.FC = () => {
                 </tbody>
               </table>
 
-              <div className="px-6 py-4 bg-gray-50 flex justify-end">
+              <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button
+                  onClick={handleDisconnect}
+                  disabled={connectionLoading || !mqttStatus}
+                  className="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {connectionLoading ? "Processing..." : "Disconnect"}
+                </button>
+                <button
+                  onClick={handleConnect}
+                  disabled={connectionLoading || mqttStatus}
+                  className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {connectionLoading ? "Processing..." : "Connect"}
+                </button>
                 <button
                   onClick={handleSave}
                   className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-colors"
