@@ -10,11 +10,15 @@ const Setting: React.FC = () => {
   const [clientId, setClientId] = useState("rfid_client_001");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [topic, setTopic] = useState("Dummy");
   const [saveMessage, setSaveMessage] = useState("");
+  const [messageType, setMessageType] = useState<"success" | "error">("success");
   const [mqttStatus, setMqttStatus] = useState(false);
   const [statusLoading, setStatusLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
 
   // Load saved config and check MQTT status on mount
   useEffect(() => {
@@ -81,13 +85,39 @@ const Setting: React.FC = () => {
         setClientId(config.clientId || "rfid_client_001");
         setUsername(config.username || "");
         setPassword(config.password || "");
+        setTopic(config.topic || "Dummy");
       }
+      setHasChanges(false);
     } catch (error) {
       console.error("Failed to load config:", error);
     }
   };
 
+  const validateConfig = () => {
+    const errors = [];
+    if (!host.trim()) errors.push("Host is required");
+    if (!port.trim()) errors.push("Port is required");
+    if (isNaN(Number(port)) || Number(port) < 1 || Number(port) > 65535) {
+      errors.push("Port must be between 1 and 65535");
+    }
+    if (!clientId.trim()) errors.push("Client ID is required");
+    if (!protocol) errors.push("Protocol is required");
+    return errors;
+  };
+
+  const showMessage = (msg: string, type: "success" | "error" = "success") => {
+    setMessageType(type);
+    setSaveMessage(msg);
+    setTimeout(() => setSaveMessage(""), 4000);
+  };
+
   const handleSave = async () => {
+    const errors = validateConfig();
+    if (errors.length > 0) {
+      showMessage(`Validation errors: ${errors.join(", ")}`, "error");
+      return;
+    }
+
     const settings = {
       name,
       protocol,
@@ -96,12 +126,13 @@ const Setting: React.FC = () => {
       clientId,
       username,
       password,
+      topic,
     };
     
     console.log("Attempting to save settings:", settings);
     
     try {
-      setSaveMessage("Saving configuration...");
+      showMessage("Saving configuration...", "success");
       
       // Save to backend
       const response = await axios.post("http://localhost:5001/api/mqtt/save", settings);
@@ -110,32 +141,53 @@ const Setting: React.FC = () => {
       // Save to localStorage
       localStorage.setItem("mqttConfig", JSON.stringify(settings));
       
-      setSaveMessage("Configuration saved successfully!");
+      setHasChanges(false);
+      showMessage("Configuration saved successfully!", "success");
       
       // Check MQTT status after saving
       setTimeout(() => checkMqttStatus(), 500);
-      
-      setTimeout(() => setSaveMessage(""), 3000);
     } catch (error: any) {
       console.error("Failed to save settings:", error);
-      setSaveMessage(`Error: ${error.response?.data?.error || error.message}`);
+      showMessage(`Error: ${error.response?.data?.error || error.message}`, "error");
     }
   };
 
   const handleConnect = async () => {
+    const errors = validateConfig();
+    if (errors.length > 0) {
+      showMessage(`Cannot connect. Fix these errors first: ${errors.join(", ")}`, "error");
+      return;
+    }
+
     try {
       setConnectionLoading(true);
-      setSaveMessage("Connecting to MQTT...");
+      showMessage("Connecting to MQTT broker...", "success");
       
+      // First save the config if not already saved
+      const settings = {
+        name,
+        protocol,
+        host,
+        port,
+        clientId,
+        username,
+        password,
+        topic,
+      };
+      
+      await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      localStorage.setItem("mqttConfig", JSON.stringify(settings));
+      
+      // Then connect
       const response = await axios.post("http://localhost:5001/api/mqtt/connect");
       
-      setSaveMessage("MQTT connected successfully!");
+      showMessage("✓ MQTT connected successfully!", "success");
       await checkMqttStatus();
       
-      setTimeout(() => setSaveMessage(""), 3000);
       console.log("MQTT connected:", response.data);
     } catch (error: any) {
-      setSaveMessage(`Error connecting: ${error.response?.data?.error || error.message}`);
+      const errorMsg = error.response?.data?.error || error.message;
+      showMessage(`Connection failed: ${errorMsg}`, "error");
       console.error("Failed to connect MQTT:", error);
     } finally {
       setConnectionLoading(false);
@@ -145,20 +197,62 @@ const Setting: React.FC = () => {
   const handleDisconnect = async () => {
     try {
       setConnectionLoading(true);
-      setSaveMessage("Disconnecting from MQTT...");
+      showMessage("Disconnecting from MQTT broker...", "success");
       
       const response = await axios.post("http://localhost:5001/api/mqtt/disconnect");
       
-      setSaveMessage("MQTT disconnected successfully!");
+      showMessage("✓ MQTT disconnected successfully!", "success");
       await checkMqttStatus();
       
-      setTimeout(() => setSaveMessage(""), 3000);
       console.log("MQTT disconnected:", response.data);
     } catch (error: any) {
-      setSaveMessage(`Error disconnecting: ${error.response?.data?.error || error.message}`);
+      const errorMsg = error.response?.data?.error || error.message;
+      showMessage(`Disconnection failed: ${errorMsg}`, "error");
       console.error("Failed to disconnect MQTT:", error);
     } finally {
       setConnectionLoading(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    const errors = validateConfig();
+    if (errors.length > 0) {
+      showMessage(`Validation errors: ${errors.join(", ")}`, "error");
+      return;
+    }
+
+    try {
+      setTestingConnection(true);
+      showMessage("Testing connection...", "success");
+      
+      const settings = {
+        name,
+        protocol,
+        host,
+        port,
+        clientId,
+        username,
+        password,
+        topic,
+      };
+      
+      // Save config temporarily
+      await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      
+      // Test by checking status
+      const response = await axios.get("http://localhost:5001/api/mqtt/status");
+      
+      if (response.data) {
+        showMessage("✓ Connection test successful!", "success");
+      } else {
+        showMessage("Connection test inconclusive", "error");
+      }
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.error || error.message;
+      showMessage(`Connection test failed: ${errorMsg}`, "error");
+      console.error("Connection test error:", error);
+    } finally {
+      setTestingConnection(false);
     }
   };
 
@@ -181,7 +275,7 @@ const Setting: React.FC = () => {
 
             {saveMessage && (
               <div className={`mb-6 px-4 py-3 rounded-lg font-medium ${
-                saveMessage.includes("Error")
+                messageType === "error"
                   ? "bg-red-100 text-red-800 border border-red-300"
                   : "bg-green-100 text-green-800 border border-green-300"
               }`}>
@@ -208,7 +302,10 @@ const Setting: React.FC = () => {
                       <input
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                          setHasChanges(true);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                         placeholder="e.g., MQTT Connection"
                       />
@@ -280,14 +377,17 @@ const Setting: React.FC = () => {
                       <input
                         type="text"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => {
+                          setUsername(e.target.value);
+                          setHasChanges(true);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                         placeholder="e.g., admin"
                       />
                     </td>
                   </tr>
 
-                  <tr>
+                  <tr className="border-b border-gray-200">
                     <td className="px-6 py-4 text-sm font-medium text-gray-700">
                       Password
                     </td>
@@ -295,9 +395,30 @@ const Setting: React.FC = () => {
                       <input
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e) => {
+                          setPassword(e.target.value);
+                          setHasChanges(true);
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                         placeholder="e.g., ••••••••"
+                      />
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td className="px-6 py-4 text-sm font-medium text-gray-700">
+                      Topic
+                    </td>
+                    <td className="px-6 py-4">
+                      <input
+                        type="text"
+                        value={topic}
+                        onChange={(e) => {
+                          setTopic(e.target.value);
+                          setHasChanges(true);
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
+                        placeholder="e.g., Dummy or #"
                       />
                     </td>
                   </tr>
@@ -305,6 +426,13 @@ const Setting: React.FC = () => {
               </table>
 
               <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
+                <button
+                  onClick={handleTestConnection}
+                  disabled={testingConnection || connectionLoading}
+                  className="px-6 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {testingConnection ? "Testing..." : "Test Connection"}
+                </button>
                 <button
                   onClick={handleDisconnect}
                   disabled={connectionLoading || !mqttStatus}
