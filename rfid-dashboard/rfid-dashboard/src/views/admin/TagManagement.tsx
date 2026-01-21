@@ -125,6 +125,19 @@ const TagManagement: React.FC = () => {
   };
 
   // Pagination component
+  const handleRefreshTagStream = () => {
+    // Clear and reload tag stream from sessionStorage
+    sessionStorage.setItem("tagStreamScans", JSON.stringify([]));
+    setTagStreamScans([]);
+    // Optionally reload from storage after a brief delay if new data arrives
+    setTimeout(() => {
+      const saved = sessionStorage.getItem("tagStreamScans");
+      if (saved) {
+        setTagStreamScans(JSON.parse(saved));
+      }
+    }, 100);
+  };
+
   const PaginationControls = ({
     currentPage,
     totalPages,
@@ -409,9 +422,17 @@ const TagManagement: React.FC = () => {
 
             {/* Tag Stream Table */}
             <div className="card">
-              <h2 className="text-sm font-medium text-gray-900 mb-5">
-                Tag Stream
-              </h2>
+              <div className="flex items-center justify-between mb-5">
+                <h2 className="text-sm font-medium text-gray-900">
+                  Tag Stream
+                </h2>
+                <button
+                  onClick={handleRefreshTagStream}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors flex items-center gap-2"
+                >
+                  🔄 Refresh
+                </button>
+              </div>
               {tagStreamScans.length === 0 ? (
                 <div className="text-center py-8 text-gray-400 text-sm">
                   No scan data available.

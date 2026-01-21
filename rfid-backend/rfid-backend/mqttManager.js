@@ -69,24 +69,20 @@ function connectMQTT(config, io) {
         "SELECT tag_name FROM tag_info WHERE epc = ?",
         [epc],
         (err, results) => {
-          // Only emit if tag exists in database
-          if (results && results.length > 0 && results[0]?.tag_name) {
-            const tag_name = results[0].tag_name;
+          // Use tag_name if found, otherwise use EPC as fallback
+          const tag_name = (results && results.length > 0 && results[0]?.tag_name) ? results[0].tag_name : epc;
 
-            // Emit MQTT data to connected clients
-            if (io) {
-              io.emit('mqtt-data', {
-                epc: epc,
-                tag_name: tag_name,
-                read_time: read_time,
-                timestamp: new Date().toISOString()
-              });
-            }
-
-            console.log("Emitted to clients:", { epc, tag_name, read_time });
-          } else {
-            console.log("EPC not found in tag_info, skipping emission:", epc);
+          // Emit MQTT data to connected clients (always emit, regardless of DB match)
+          if (io) {
+            io.emit('mqtt-data', {
+              epc: epc,
+              tag_name: tag_name,
+              read_time: read_time,
+              timestamp: new Date().toISOString()
+            });
           }
+
+          console.log("Emitted to clients:", { epc, tag_name, read_time });
         }
       );
 
