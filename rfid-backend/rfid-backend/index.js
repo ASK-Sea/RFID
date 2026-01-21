@@ -34,9 +34,8 @@ io.on('connection', (socket) => {
   });
 });
 
-// Start MQTT listener with Socket.IO - this also stores the client status
-const mqttStatus = startMQTT(io);
-app.set('mqttStatus', mqttStatus);
+// MQTT connection is now controlled only by the Settings form
+// startMQTT is no longer auto-started to avoid conflicts with managed connection
 
 // Start express server
 const PORT = process.env.PORT || 5000;

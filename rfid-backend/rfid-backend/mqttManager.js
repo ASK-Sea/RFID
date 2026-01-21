@@ -1,13 +1,32 @@
 const mqtt = require("mqtt");
+const db = require('./db');
 
 let client = null;
 let currentConfig = null;
 let isConnectedFlag = false;
 
 function connectMQTT(config, io) {
+  // If trying to connect to different host/port, disconnect the old client first
   if (client) {
-    console.log("MQTT already connected or connecting");
-    return;
+    const oldUrl = `${currentConfig?.protocol}${currentConfig?.host}:${currentConfig?.port}`;
+    const newUrl = `${config.protocol}${config.host}:${config.port}`;
+    
+    if (oldUrl !== newUrl) {
+      console.log("Host/port changed, disconnecting old client:", oldUrl);
+      client.end(true, () => {
+        client = null;
+        isConnectedFlag = false;
+        // Recursively call to connect with new config
+        connectMQTT(config, io);
+      });
+      return;
+    }
+    
+    // If already connecting to same host, return
+    if (isConnectedFlag) {
+      console.log("MQTT already connected to this host");
+      return;
+    }
   }
 
   currentConfig = config;
@@ -16,9 +35,10 @@ function connectMQTT(config, io) {
 
   client = mqtt.connect(url, {
     clientId: config.clientId,
-    username: config.username,
-    password: config.password,
+    username: config.username || undefined,
+    password: config.password || undefined,
     reconnectPeriod: 5000,
+    connectTimeout: 10000,
   });
 
   client.on("connect", () => {
@@ -28,6 +48,66 @@ function connectMQTT(config, io) {
       io.emit("mqtt-status", { connected: true });
     }
     client.subscribe(config.topic || "#");
+    console.log("Subscribed to topic:", config.topic || "#");
+  });
+
+  client.on("message", async (topic, message) => {
+    try {
+      const data = JSON.parse(message.toString());
+      const epc = data.EPC;
+      const read_time = data.Time;
+
+      if (!epc || !read_time) {
+        console.error("Invalid payload:", data);
+        return;
+      }
+
+      console.log("Received EPC:", epc, "read_time:", read_time);
+
+      // Query tag_info to get tag_name
+      db.query(
+        "SELECT tag_name FROM tag_info WHERE epc = ?",
+        [epc],
+        (err, results) => {
+          // Only emit if tag exists in database
+          if (results && results.length > 0 && results[0]?.tag_name) {
+            const tag_name = results[0].tag_name;
+
+            // Emit MQTT data to connected clients
+            if (io) {
+              io.emit('mqtt-data', {
+                epc: epc,
+                tag_name: tag_name,
+                read_time: read_time,
+                timestamp: new Date().toISOString()
+              });
+            }
+
+            console.log("Emitted to clients:", { epc, tag_name, read_time });
+          } else {
+            console.log("EPC not found in tag_info, skipping emission:", epc);
+          }
+        }
+      );
+
+      // Update EPC statistics in `epc_stats`
+      db.query(
+        `INSERT INTO epc_stats (epc, scan_count, last_seen)
+         VALUES (?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+            scan_count = scan_count + 1,
+            last_seen = NOW();`,
+        [epc],
+        (err) => {
+          if (err) console.error("DB Update Error (epc_stats):", err);
+          else console.log("Updated epc_stats:", epc);
+        }
+      );
+
+    } catch (error) {
+      console.error("JSON Parse Error:", error.message);
+      console.error("Raw message:", message.toString());
+    }
   });
 
   client.on("close", () => {
@@ -51,14 +131,19 @@ function connectMQTT(config, io) {
 
 function disconnectMQTT(io) {
   if (client) {
+    console.log("Closing MQTT client...");
     client.end(true, () => {
-      console.log("MQTT disconnected");
+      console.log("MQTT disconnected and cleaned up");
       isConnectedFlag = false;
+      client = null;
+      currentConfig = null;
       if (io) {
         io.emit("mqtt-status", { connected: false });
       }
-      client = null;
     });
+  } else {
+    isConnectedFlag = false;
+    console.log("No MQTT client to disconnect");
   }
 }
 

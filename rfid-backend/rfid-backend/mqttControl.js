@@ -28,15 +28,21 @@ router.post("/connect", (req, res) => {
   }
   
   const io = req.app.get("io");
-  console.log("Connect request received, restarting MQTT with saved config");
+  console.log("Connect request received with saved config:", savedConfig.host);
   
-  // Connect managed connection
-  connectMQTT(savedConfig, io);
+  // Stop auto connection first to prevent interference
+  stopAutoMQTT(io);
   
-  // Restart auto connection
-  restartAutoMQTT(io);
-  
-  res.json({ connected: true });
+  // Give a brief moment for auto connection to stop, then disconnect managed connection
+  setTimeout(() => {
+    disconnectMQTT(io);
+    
+    // Then connect with saved config
+    setTimeout(() => {
+      connectMQTT(savedConfig, io);
+      res.json({ connected: true });
+    }, 500);
+  }, 300);
 });
 
 router.post("/disconnect", (req, res) => {
@@ -54,15 +60,13 @@ router.post("/disconnect", (req, res) => {
 });
 
 router.get("/status", (req, res) => {
-  // Check both the managed connection and the automatic connection
+  // Prioritize managed connection status (from settings form)
   const managedConnected = isConnected();
-  const autoConnected = isAutoMQTTConnected();
-  const connected = managedConnected || autoConnected;
+  const connected = managedConnected;
   
   console.log("MQTT status check:", { 
     connected, 
     managedConnected,
-    autoConnected,
     hasSavedConfig: !!savedConfig 
   });
   
