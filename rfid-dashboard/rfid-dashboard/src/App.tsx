@@ -23,6 +23,7 @@ const AppContent: React.FC = () => {
       const latestScan = [{
         epc: data.epc,
         tag_name: data.tag_name,
+        purpose: data.purpose || "",
       }];
       sessionStorage.setItem("latestScans", JSON.stringify(latestScan));
       

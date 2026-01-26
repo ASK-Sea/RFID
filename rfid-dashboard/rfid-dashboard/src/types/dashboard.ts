@@ -3,4 +3,5 @@
 export type SelectedTag = {
   epc: string;
   tag_name: string;
+  purpose: string;
 };

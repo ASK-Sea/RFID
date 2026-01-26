@@ -14,6 +14,22 @@ const Dashboard: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
+  // ------------------ Listen for real-time updates ------------------
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = sessionStorage.getItem("latestScans");
+      if (saved) {
+        setLatestScans(JSON.parse(saved));
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+    
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
   // ------------------ Time ------------------
   useEffect(() => {
     const updateDateTime = () => {
@@ -118,12 +134,13 @@ const Dashboard: React.FC = () => {
                   fontSize: getWelcomeStyle().fontSize,
                 }}
               >
-                {latestScans.length > 0 ? (
+                {latestScans.length > 0 && latestScans[0].tag_name !== "N/A" ? (
                   <>
                     Welcome{" "}
                     {latestScans.map((tag, idx) => (
                       <span key={tag.epc} className="font-semibold">
                         {tag.tag_name}
+                        {tag.purpose && ` ${tag.purpose}`}
                         {idx < latestScans.length - 1 ? ", " : ""}
                       </span>
                     ))}

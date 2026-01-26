@@ -1,5 +1,5 @@
 const mqtt = require("mqtt");
-const db = require('./db');
+const db = require("./db");
 
 let client = null;
 let currentConfig = null;
@@ -10,7 +10,7 @@ function connectMQTT(config, io) {
   if (client) {
     const oldUrl = `${currentConfig?.protocol}${currentConfig?.host}:${currentConfig?.port}`;
     const newUrl = `${config.protocol}${config.host}:${config.port}`;
-    
+
     if (oldUrl !== newUrl) {
       console.log("Host/port changed, disconnecting old client:", oldUrl);
       client.end(true, () => {
@@ -21,7 +21,7 @@ function connectMQTT(config, io) {
       });
       return;
     }
-    
+
     // If already connecting to same host, return
     if (isConnectedFlag) {
       console.log("MQTT already connected to this host");
@@ -62,44 +62,60 @@ function connectMQTT(config, io) {
         return;
       }
 
-      console.log("Received EPC:", epc, "read_time:", read_time);
-
-      // Query tag_info to get tag_name
       db.query(
-        "SELECT tag_name FROM tag_info WHERE epc = ?",
+        "SELECT tag_name, purpose FROM tag_info WHERE epc = ?",
         [epc],
         (err, results) => {
-          // Use tag_name if found, otherwise use EPC as fallback
-          const tag_name = (results && results.length > 0 && results[0]?.tag_name) ? results[0].tag_name : epc;
+          let tag_name = "N/A";
+          let purpose = "";
+          if (results && results.length > 0) {
+            tag_name = results[0]?.tag_name || "N/A";
+            purpose = results[0]?.purpose || "";
+          }
 
-          // Emit MQTT data to connected clients (always emit, regardless of DB match)
+          // Emit MQTT data to connected clients
           if (io) {
-            io.emit('mqtt-data', {
+            io.emit("mqtt-data", {
               epc: epc,
               tag_name: tag_name,
+              purpose: purpose,
               read_time: read_time,
-              timestamp: new Date().toISOString()
+              timestamp: new Date().toISOString(),
             });
           }
 
-          console.log("Emitted to clients:", { epc, tag_name, read_time });
-        }
+          console.log("Emitted to clients:", { epc, tag_name, purpose, read_time });
+        },
       );
-
-      // Update EPC statistics in `epc_stats`
+      // Only update epc_stats if EPC already exists (don't insert new)
       db.query(
-        `INSERT INTO epc_stats (epc, scan_count, last_seen)
-         VALUES (?, 1, NOW())
-         ON DUPLICATE KEY UPDATE
-            scan_count = scan_count + 1,
-            last_seen = NOW();`,
+        `UPDATE epc_stats 
+         SET scan_count = scan_count + 1, last_seen = NOW()
+         WHERE epc = ?;`,
         [epc],
-        (err) => {
-          if (err) console.error("DB Update Error (epc_stats):", err);
-          else console.log("Updated epc_stats:", epc);
-        }
+        (err, result) => {
+          if (err) {
+            console.error("DB Update Error (epc_stats):", err);
+          } else {
+            if (result.affectedRows > 0) {
+              console.log("✓ Updated epc_stats for EPC:", epc);
+              console.log("  Affected rows:", result.affectedRows);
+              // Query to verify the current count
+              db.query(
+                "SELECT scan_count FROM epc_stats WHERE epc = ?",
+                [epc],
+                (err2, rows) => {
+                  if (!err2 && rows && rows.length > 0) {
+                    console.log("  Current count in DB:", rows[0].scan_count);
+                  }
+                }
+              );
+            } else {
+              console.log("⚠ EPC not registered in database:", epc);
+            }
+          }
+        },
       );
-
     } catch (error) {
       console.error("JSON Parse Error:", error.message);
       console.error("Raw message:", message.toString());
@@ -114,7 +130,7 @@ function connectMQTT(config, io) {
     }
   });
 
-  client.on("error", err => {
+  client.on("error", (err) => {
     console.error("MQTT error:", err.message);
     isConnectedFlag = false;
     if (io) {
@@ -148,7 +164,7 @@ function isConnected() {
   if (client && isConnectedFlag && client.connected) {
     return true;
   }
-  
+
   // If not, return the flag status
   return isConnectedFlag;
 }

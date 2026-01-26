@@ -35,7 +35,7 @@ const TagManagement: React.FC = () => {
   useEffect(() => {
     loadTags();
     loadStats();
-    intervalRef.current = setInterval(loadStats, 3000);
+    intervalRef.current = setInterval(loadStats, 1000);
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
@@ -43,19 +43,19 @@ const TagManagement: React.FC = () => {
 
   // --- Update registeredTagStats ---
   useEffect(() => {
-    setRegisteredTagStats(
-      tagList.map((tag) => {
-        const stat = stats.find((s) => s.epc === tag.epc);
-        return {
-          epc: tag.epc,
-          tag_name: tag.tag_name,
-          position: tag.position,
-          purpose: tag.purpose,
-          scan_count: stat?.scan_count || 0,
-          last_seen: stat?.last_seen || null,
-        };
-      })
-    );
+    const newStats = tagList.map((tag) => {
+      const stat = stats.find((s) => s.epc === tag.epc);
+      return {
+        epc: tag.epc,
+        tag_name: tag.tag_name,
+        position: tag.position,
+        purpose: tag.purpose,
+        scan_count: stat?.scan_count || 0,
+        last_seen: stat?.last_seen || null,
+      };
+    });
+    console.log("🔄 Updated registeredTagStats:", newStats);
+    setRegisteredTagStats(newStats);
   }, [stats, tagList]);
 
   // --- Send only Tag Stream data to Dashboard ---
@@ -192,6 +192,7 @@ const TagManagement: React.FC = () => {
   const loadStats = async () => {
     try {
       const res = await axios.get<Stat[]>("http://localhost:5001/api/stats");
+      console.log("📊 Loaded stats from API:", res.data);
       setStats(res.data);
     } catch {
       setStats([]);

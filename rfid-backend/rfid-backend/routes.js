@@ -8,10 +8,11 @@ const db = require("./db");
 //
 router.get("/scans", (req, res) => {
   const sql = `
-    SELECT 
+   SELECT 
       s.epc,
       s.read_time,
-      COALESCE(t.tag_name, 'N/A') AS display_name
+      COALESCE(t.tag_name, 'N/A') AS display_name,
+      COALESCE(t.purpose, '') AS purpose
     FROM scans s
     LEFT JOIN tag_info t ON s.epc = t.epc
     ORDER BY s.read_time DESC
@@ -56,7 +57,8 @@ router.get("/top-epc", (req, res) => {
     SELECT 
       e.epc,
       e.scan_count,
-      COALESCE(t.tag_name, 'N/A') AS display_name
+      COALESCE(t.tag_name, 'N/A') AS display_name,
+      COALESCE(t.purpose, 'N/A') AS display_name
     FROM epc_stats e
     LEFT JOIN tag_info t ON e.epc = t.epc
     ORDER BY e.scan_count DESC
@@ -71,7 +73,7 @@ router.get("/top-epc", (req, res) => {
 });
 
 //
-// 4️⃣ Fetch ALL tag stream data
+// 4️⃣ Fetch ALL tag list data
 // GET /api/tags
 //
 router.get("/tags", (req, res) => {
@@ -80,7 +82,7 @@ router.get("/tags", (req, res) => {
       t.epc,
       t.tag_name,
       t.purpose,
-      e.position,
+      t.position,
       e.last_seen
     FROM tag_info t
     LEFT JOIN epc_stats e ON t.epc = e.epc
@@ -106,36 +108,35 @@ router.post("/tags", (req, res) => {
   }
 
   const tagInfoSql = `
-    INSERT INTO tag_info (epc, tag_name, purpose)
-    VALUES (?, ?, ?)
+    INSERT INTO tag_info (epc, tag_name, purpose, position)
+    VALUES (?, ?, ?, ?)
     ON DUPLICATE KEY UPDATE
       tag_name = VALUES(tag_name),
-      purpose = VALUES(purpose)
-  `;
-  const epcStatsSql = `
-    INSERT INTO epc_stats (epc, position)
-    VALUES (?, ?)
-    ON DUPLICATE KEY UPDATE
+      purpose = VALUES(purpose),
       position = VALUES(position)
   `;
+  const epcStatsSql = `
+    INSERT INTO epc_stats (epc, scan_count, last_seen)
+    VALUES (?, 0, NOW())
+    ON DUPLICATE KEY UPDATE
+      scan_count = scan_count,
+      last_seen = last_seen
+  `;
 
-  db.query(tagInfoSql, [epc, tag_name, purpose], (err) => {
+  db.query(tagInfoSql, [epc, tag_name, purpose, position], (err) => {
     if (err) {
       console.error("Failed to save tag_info:", err);
       return res.status(500).json({ error: "Failed to save tag" });
     }
 
-    if (position !== undefined) {
-      db.query(epcStatsSql, [epc, position], (err2) => {
-        if (err2) {
-          console.error("Failed to save position:", err2);
-          return res.status(500).json({ error: "Failed to save position" });
-        }
-        res.json({ message: "Tag saved successfully" });
-      });
-    } else {
+    db.query(epcStatsSql, [epc], (err2, result) => {
+      if (err2) {
+        console.error("Failed to save epc_stats:", err2);
+        return res.status(500).json({ error: "Failed to save EPC stats" });
+      }
+      console.log("✓ Saved epc_stats for EPC:", epc, "| Affected rows:", result.affectedRows);
       res.json({ message: "Tag saved successfully" });
-    }
+    });
   });
 });
 
@@ -160,9 +161,6 @@ router.delete("/tags/:epc", (req, res) => {
   });
 });
 
-//
-// 7️⃣ Removed: Fetch all tag stream data FROM SCAN TABLES
-// 8️⃣ Removed: Fetch EPC statistics FROM SCAN TABLES
 
 // MQTT Routes
 const mqttControl = require("./mqttControl");
