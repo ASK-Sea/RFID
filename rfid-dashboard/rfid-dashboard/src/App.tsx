@@ -27,7 +27,7 @@ const AppContent: React.FC = () => {
       }];
       sessionStorage.setItem("latestScans", JSON.stringify(latestScan));
       
-      // Update Tag Stream data
+      // Update Tag Stream data with all new fields
       const savedStream = sessionStorage.getItem("tagStreamScans");
       const currentStream = savedStream ? JSON.parse(savedStream) : [];
       
@@ -36,6 +36,15 @@ const AppContent: React.FC = () => {
         tag_name: data.tag_name,
         read_time: data.read_time,
         timestamp: data.timestamp,
+        // New fields from enhanced MQTT payload
+        tid: data.tid || "",
+        rssi: data.rssi || "",
+        antId: data.antId || "",
+        mac: data.mac || "",
+        device: data.device || "",
+        readType: data.readType || "",
+        ip: data.ip || "",
+        netMsg: data.netMsg || "",
       };
       
       const updatedStream = [newScan, ...currentStream].slice(0, 50);

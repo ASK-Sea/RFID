@@ -453,6 +453,17 @@ const TagManagement: React.FC = () => {
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                             Read Time
                           </th>
+                        
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            RSSI
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Ant ID
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Device
+                          </th>
+                          
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -472,6 +483,15 @@ const TagManagement: React.FC = () => {
                               {scan.read_time
                                 ? new Date(scan.read_time).toLocaleString()
                                 : "Not scanned yet"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {scan.rssi || "-"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {scan.antId || "-"}
+                            </td>
+                            <td className="px-4 py-2 text-sm text-gray-500">
+                              {scan.device || "-"}
                             </td>
                           </tr>
                         ))}

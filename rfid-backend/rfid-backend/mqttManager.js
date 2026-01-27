@@ -53,12 +53,15 @@ function connectMQTT(config, io) {
 
   client.on("message", async (topic, message) => {
     try {
-      const data = JSON.parse(message.toString());
+      const payload = JSON.parse(message.toString());
+      
+      // Extract data from the new nested structure
+      const data = payload.data || payload;
       const epc = data.EPC;
-      const read_time = data.Time;
+      const read_time = data.ReadTime || data.Time;
 
       if (!epc || !read_time) {
-        console.error("Invalid payload:", data);
+        console.error("Invalid payload:", payload);
         return;
       }
 
@@ -81,6 +84,15 @@ function connectMQTT(config, io) {
               purpose: purpose,
               read_time: read_time,
               timestamp: new Date().toISOString(),
+              // New fields from the enhanced payload
+              tid: data.TID || "N/A",
+              rssi: data.RSSI || "N/A",
+              antId: data.AntId || "N/A",
+              mac: data.MAC || "N/A",
+              device: data.Device || "N/A",
+              readType: data.ReadType || "N/A",
+              ip: data.IP || "N/A",
+              netMsg: data.NetMsg || "N/A",
             });
           }
 

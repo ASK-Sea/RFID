@@ -17,7 +17,6 @@ const Setting: React.FC = () => {
   const [statusLoading, setStatusLoading] = useState(true);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(false);
-  const [testingConnection, setTestingConnection] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Load saved config and check MQTT status on mount
@@ -214,48 +213,6 @@ const Setting: React.FC = () => {
     }
   };
 
-  const handleTestConnection = async () => {
-    const errors = validateConfig();
-    if (errors.length > 0) {
-      showMessage(`Validation errors: ${errors.join(", ")}`, "error");
-      return;
-    }
-
-    try {
-      setTestingConnection(true);
-      showMessage("Testing connection...", "success");
-      
-      const settings = {
-        name,
-        protocol,
-        host,
-        port,
-        clientId,
-        username,
-        password,
-        topic,
-      };
-      
-      // Save config temporarily
-      await axios.post("http://localhost:5001/api/mqtt/save", settings);
-      
-      // Test by checking status
-      const response = await axios.get("http://localhost:5001/api/mqtt/status");
-      
-      if (response.data) {
-        showMessage("✓ Connection test successful!", "success");
-      } else {
-        showMessage("Connection test inconclusive", "error");
-      }
-    } catch (error: any) {
-      const errorMsg = error.response?.data?.error || error.message;
-      showMessage(`Connection test failed: ${errorMsg}`, "error");
-      console.error("Connection test error:", error);
-    } finally {
-      setTestingConnection(false);
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -426,13 +383,6 @@ const Setting: React.FC = () => {
               </table>
 
               <div className="px-6 py-4 bg-gray-50 flex justify-end gap-3">
-                <button
-                  onClick={handleTestConnection}
-                  disabled={testingConnection || connectionLoading}
-                  className="px-6 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {testingConnection ? "Testing..." : "Test Connection"}
-                </button>
                 <button
                   onClick={handleDisconnect}
                   disabled={connectionLoading || !mqttStatus}
