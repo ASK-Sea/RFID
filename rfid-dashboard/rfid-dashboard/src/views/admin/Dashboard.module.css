@@ -1,86 +1,211 @@
-/* Dashboard Page Styles - Module Specific */
+/* Dashboard.module.css */
 
-.container {
-  composes: global-container from '../../style.css';
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap');
+
+.dashboardContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  font-family: 'Rajdhani', sans-serif;
+  color: #ffffff;
+  background-color: #0f172a;
 }
 
-.mainWrapper {
-  composes: global-main-wrapper from '../../style.css';
+.backgroundLayer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  z-index: 0;
 }
 
-.mainContent {
-  composes: global-main-content from '../../style.css';
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(16, 23, 42, 0.4) 0%, rgba(16, 23, 42, 0.8) 100%);
+  z-index: 1;
 }
 
-.innerContainer {
-  composes: global-inner-container from '../../style.css';
+/* --- Navigation Hiding Wrappers --- */
+.headerWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  transform: translateY(-95%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-bottom: 20px; 
+}
+.headerWrapper:hover { transform: translateY(0); }
+
+.sidebarWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  z-index: 100;
+  transform: translateX(-95%);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  padding-right: 30px;
+}
+.sidebarWrapper:hover { transform: translateX(0); }
+
+
+/* --- Main Content --- */
+.contentWrapper {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
 }
 
-.dateTimeCard {
-  composes: global-card from '../../style.css';
-  margin-bottom: var(--spacing-xl);
-}
-
-.dateTimeContent {
+.displayCard {
+  width: 100%;
+  max-width: 1000px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  border-radius: 24px;
+  padding: 4rem 3rem;
   text-align: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.dateText {
-  font-weight: 600;
-  margin-bottom: var(--spacing-sm);
+.displayCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, #00d2ff, transparent);
+  box-shadow: 0 0 15px #00d2ff;
 }
 
-.timeText {
+/* --- Typography --- */
+.companyLabel {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 4rem;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.welcomeTitle {
+  font-size: 2.5rem;
+  font-weight: 300;
+  margin-bottom: 0.5rem;
+  color: #ffffff;
+}
+
+.clientName {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 3rem;
+  font-weight: 700;
+  background: linear-gradient(to right, #ffffff, #a5f3fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(165, 243, 252, 0.3);
+  margin: 0.5rem 0 0.5rem 0; /* Reduced margin to fit position */
+  line-height: 1.1;
+  animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* NEW: Style for Position */
+.clientPosition {
   font-size: 2rem;
-  font-weight: bold;
-  font-family: 'Courier New', monospace;
+  color: #cbd5e1; /* Light gray-blue */
+  font-weight: 300;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.chartsWrapper {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: var(--spacing-xl);
-  margin-bottom: var(--spacing-xl);
-}
-
-.chartCard {
-  composes: global-card from '../../style.css';
-  min-height: 300px;
-}
-
-.chartTitle {
-  font-size: 1.125rem;
+.tagBadge {
+  display: inline-block;
+  padding: 0.5rem 1.5rem;
+  background: rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(0, 210, 255, 0.3);
+  border-radius: 50px;
+  color: #00d2ff;
+  font-size: 1.25rem;
   font-weight: 600;
-  color: var(--color-gray-700);
-  margin-bottom: var(--spacing-lg);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
+  animation: fadeIn 1s ease;
 }
 
-.latestScansCard {
-  composes: global-card from '../../style.css';
+/* --- Clock --- */
+.clockContainer {
+  position: absolute;
+  bottom: 3rem;
+  right: 4rem;
+  text-align: right;
 }
 
-.scansTable {
-  composes: global-table from '../../style.css';
+.timeDisplay {
+  font-family: 'Orbitron', monospace;
+  font-size: 3rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
 }
 
-.scansTable th {
-  text-align: left;
-  padding: var(--spacing-md);
-  background-color: var(--color-gray-100);
-  font-weight: 600;
-  color: var(--color-gray-700);
-  border-bottom: 2px solid var(--color-gray-200);
+.dateDisplay {
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
-.scansTable td {
-  padding: var(--spacing-md);
-  border-bottom: 1px solid var(--color-gray-200);
+/* --- Animations --- */
+.idleContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0.7;
 }
 
-.scansTable tbody tr:hover {
-  background-color: var(--color-gray-50);
+.scannerLine {
+  width: 100%;
+  height: 2px;
+  background: #00d2ff;
+  box-shadow: 0 0 10px #00d2ff;
+  margin-bottom: 2rem;
+  animation: scan 3s infinite ease-in-out;
 }
 
-.emptyState {
-  composes: global-empty-state from '../../style.css';
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scan {
+  0% { transform: scaleX(0); opacity: 0; }
+  50% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(0); opacity: 0; }
 }

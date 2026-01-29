@@ -49,11 +49,12 @@ function startMQTT(io) {
             io.emit('mqtt-data', {
               epc: epc,
               tag_name: tag_name,
+              position: data.position || "N/A",
               read_time: read_time,
               timestamp: new Date().toISOString()
             });
 
-            console.log("Emitted to clients:", { epc, tag_name, read_time });
+            console.log("Emitted to clients:", { epc, tag_name, position, read_time });
           } else {
             console.log("EPC not found in tag_info, skipping emission:", epc);
           }

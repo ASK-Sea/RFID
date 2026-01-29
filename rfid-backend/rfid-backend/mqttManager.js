@@ -66,14 +66,16 @@ function connectMQTT(config, io) {
       }
 
       db.query(
-        "SELECT tag_name, purpose FROM tag_info WHERE epc = ?",
+        "SELECT tag_name, purpose, position FROM tag_info WHERE epc = ?",
         [epc],
         (err, results) => {
           let tag_name = "N/A";
           let purpose = "";
+          let position = "";
           if (results && results.length > 0) {
             tag_name = results[0]?.tag_name || "N/A";
             purpose = results[0]?.purpose || "";
+            position = results[0]?.position || "";
           }
 
           // Emit MQTT data to connected clients
@@ -82,6 +84,7 @@ function connectMQTT(config, io) {
               epc: epc,
               tag_name: tag_name,
               purpose: purpose,
+              position: position,
               read_time: read_time,
               timestamp: new Date().toISOString(),
               // New fields from the enhanced payload

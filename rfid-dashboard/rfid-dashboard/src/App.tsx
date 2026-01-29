@@ -23,6 +23,7 @@ const AppContent: React.FC = () => {
       const latestScan = [{
         epc: data.epc,
         tag_name: data.tag_name,
+        position: data.position || "",
         purpose: data.purpose || "",
       }];
       sessionStorage.setItem("latestScans", JSON.stringify(latestScan));
@@ -34,6 +35,7 @@ const AppContent: React.FC = () => {
       const newScan = {
         epc: data.epc,
         tag_name: data.tag_name,
+        position: data.position || "",
         read_time: data.read_time,
         timestamp: data.timestamp,
         // New fields from enhanced MQTT payload

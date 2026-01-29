@@ -1,6 +1,7 @@
 import { React, useState, useEffect } from "../../import";
 import { useTheme, Header, Sidebar, bgImage } from "../../import";
 import { SelectedTag } from "../../types";
+import styles from "./Dashboard.module.css";
 
 const Dashboard: React.FC = () => {
   const { theme } = useTheme();
@@ -24,7 +25,6 @@ const Dashboard: React.FC = () => {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    
     return () => {
       window.removeEventListener("storage", handleStorageChange);
     };
@@ -55,130 +55,83 @@ const Dashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Get element styles with fallback
-  const getTitleStyle = () =>
-    theme.elements.title || {
-      backgroundColor: "rgba(255, 255, 255, 0.4)",
-      color: "#111827",
-      fontSize: "1.875rem",
-    };
+  const hasActiveClient = latestScans.length > 0 && latestScans[0].tag_name !== "N/A";
+  const activeClient = hasActiveClient ? latestScans[0] : null;
 
-  const getSubtitleStyle = () =>
-    theme.elements.subtitle || {
-      backgroundColor: "rgba(255, 255, 255, 0.3)",
-      color: "#1f2937",
-      fontSize: "1.25rem",
-    };
-
-  const getWelcomeStyle = () =>
-    theme.elements.welcome || {
-      backgroundColor: "rgba(255, 255, 255, 0.3)",
-      color: "#1f2937",
-      fontSize: "1.25rem",
-    };
-
-  const getDateStyle = () =>
-    theme.elements.date || {
-      backgroundColor: "transparent",
-      color: "#1f2937",
-      fontSize: "1rsem",
-    };
-
-  // Get date element styles with safe access
-  const dateElementStyle = getDateStyle();
-
-  // ------------------ Render ------------------
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <div className="flex flex-1">
-        <Sidebar />
-        <main
-          className="flex-1 p-6 bg-cover bg-center"
-          style={{
-            backgroundImage: theme.backgroundImage
-              ? `url(${theme.backgroundImage})`
-              : `url(${bgImage})`,
-            backgroundColor: theme.backgroundColor,
-          }}
-        >
-          <div className="container mx-auto p-6 flex flex-col items-center space-y-6">
-            <div
-              className="p-3 rounded-md"
-              style={{
-                backgroundColor: getTitleStyle().backgroundColor,
-                color: getTitleStyle().color,
-                fontSize: getTitleStyle().fontSize,
-              }}
-            >
-              Welcome to CLB Holdings Berhard
-            </div>
-
-            <div
-              className="p-2 rounded-md text-center"
-              style={{
-                backgroundColor: getSubtitleStyle().backgroundColor,
-                color: getSubtitleStyle().color,
-                fontSize: getSubtitleStyle().fontSize,
-              }}
-            >
-              Get Started on your dashboard and manage your RFID Tags
-            </div>
-
-            <div className="grid grid-cols-12 gap-4 w-full">
-              <div
-                className="p-5 rounded-md text-center col-span-6"
-                style={{
-                  backgroundColor: getWelcomeStyle().backgroundColor,
-                  color: getWelcomeStyle().color,
-                  fontSize: getWelcomeStyle().fontSize,
-                }}
-              >
-                {latestScans.length > 0 && latestScans[0].tag_name !== "N/A" ? (
-                  <>
-                    Welcome{" "}
-                    {latestScans.map((tag, idx) => (
-                      <span key={tag.epc} className="font-semibold">
-                        {tag.tag_name}
-                        {tag.purpose && ` ${tag.purpose}`}
-                        {idx < latestScans.length - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </>
-                ) : (
-                  "Welcome"
-                )}
-              </div>
-
-              <div
-                className="col-span-6 p-4 rounded-md text-center"
-                style={{
-                  backgroundColor: getWelcomeStyle().backgroundColor,
-                  color: getWelcomeStyle().color,
-                  fontSize: getWelcomeStyle().fontSize,
-                }}
-              >
-                <div
-                  style={{
-                    color: getSubtitleStyle().color,
-                    fontSize: getSubtitleStyle().fontSize,
-                  }}
-                  className="font-semibold"
-                ></div>
-                <div className="font-semibold"
-                  style={{
-                    color: dateElementStyle.color,
-                    fontSize: dateElementStyle.fontSize,
-                  }}
-                >
-                  {currentDateTime.date}
-                  {currentDateTime.time}
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
+    <div className={styles.dashboardContainer}>
+      
+      {/* HIDDEN NAVIGATION WRAPPERS */}
+      <div className={styles.headerWrapper}>
+        <Header />
       </div>
+
+      <div className={styles.sidebarWrapper}>
+        <Sidebar />
+      </div>
+
+      {/* BACKGROUND LAYER */}
+      <div 
+        className={styles.backgroundLayer}
+        style={{
+          backgroundImage: theme.backgroundImage
+            ? `url(${theme.backgroundImage})`
+            : `url(${bgImage})`,
+        }}
+      />
+      
+      {/* DARK OVERLAY */}
+      <div className={styles.overlay}></div>
+
+      <main className={styles.contentWrapper}>
+        
+        {/* Main Glass Display Card */}
+        <div className={styles.displayCard}>
+          <div className={styles.companyLabel}>CLB Holdings Berhad</div>
+
+          {hasActiveClient ? (
+            // --- ACTIVE STATE (Client Detected) ---
+            <div key={activeClient?.epc}>
+              <h1 className={styles.welcomeTitle}>Welcome to our Showroom</h1>
+              
+              {/* 1. Client Name */}
+              <div className={styles.clientName}>
+                {activeClient?.tag_name}
+              </div>
+
+              {/* 2. Client Position (New) */}
+              {activeClient?.position && (
+                 <div className={styles.clientPosition}>
+                   {activeClient.position}
+                 </div>
+              )}
+
+              {/* 3. Purpose Badge */}
+              {activeClient?.purpose && (
+                <div className={styles.tagBadge}>
+                  {activeClient.purpose}
+                </div>
+              )}
+            </div>
+          ) : (
+            // --- IDLE STATE (Waiting) ---
+            <div className={styles.idleContainer}>
+              <div className={styles.scannerLine}></div>
+              <h1 className={styles.welcomeTitle}>Welcome</h1>
+              <p style={{color: '#94a3b8', fontSize: '1.2rem', marginTop: '10px'}}>
+                Please proceed to the entrance reader
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Floating Clock */}
+        <div className={styles.clockContainer}>
+          <div className={styles.timeDisplay}>{currentDateTime.time}</div>
+          <div className={styles.dateDisplay}>{currentDateTime.date}</div>
+        </div>
+
+      </main>
     </div>
   );
 };
