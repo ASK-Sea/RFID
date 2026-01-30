@@ -9,6 +9,7 @@ export interface ElementStyle {
 export interface ThemeConfig {
   // Main background settings
   backgroundImage: string | null;
+  backgroundVideo: string | null;
   backgroundColor: string;
   
   // Element specific styling
@@ -21,11 +22,14 @@ export interface ThemeContextType {
   updateElementStyle: (elementId: string, style: Partial<ElementStyle>) => void;
   resetTheme: () => void;
   uploadBackgroundImage: (file: File) => Promise<void>;
+  uploadBackgroundVideo: (file: File) => Promise<void>;
+  getBackgroundVideoUrl: () => Promise<string | null>; // Add this
 }
 
 // Default theme
 export const DEFAULT_THEME: ThemeConfig = {
   backgroundImage: null,
+  backgroundVideo: null,
   backgroundColor: "#ffffff",
   elements: {
     "title": {

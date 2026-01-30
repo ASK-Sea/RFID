@@ -13,6 +13,8 @@ export interface Stat {
 }
 
 export interface Tag {
+  purpose: any
+  position: any
   epc: string
   tag_name: string
 }

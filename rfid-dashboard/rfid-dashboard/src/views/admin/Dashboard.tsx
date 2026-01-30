@@ -4,16 +4,31 @@ import { SelectedTag } from "../../types";
 import styles from "./Dashboard.module.css";
 
 const Dashboard: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, getBackgroundVideoUrl } = useTheme();
   const [currentDateTime, setCurrentDateTime] = useState({
     date: "",
     time: "",
   });
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [latestScans, setLatestScans] = useState<SelectedTag[]>(() => {
     const saved = sessionStorage.getItem("latestScans");
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Load video from IndexedDB
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (theme.backgroundVideo) {
+        const url = await getBackgroundVideoUrl();
+        setVideoUrl(url);
+      } else {
+        setVideoUrl(null);
+      }
+    };
+    
+    loadVideo();
+  }, [theme.backgroundVideo, getBackgroundVideoUrl]);
 
   // ------------------ Listen for real-time updates ------------------
   useEffect(() => {
@@ -71,14 +86,32 @@ const Dashboard: React.FC = () => {
       </div>
 
       {/* BACKGROUND LAYER */}
-      <div 
-        className={styles.backgroundLayer}
-        style={{
-          backgroundImage: theme.backgroundImage
-            ? `url(${theme.backgroundImage})`
-            : `url(${bgImage})`,
-        }}
-      />
+      <div className={styles.backgroundLayer}>
+        {videoUrl ? (
+          // Video background
+          <video
+            key={videoUrl}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className={styles.backgroundVideo}
+          >
+            <source src={videoUrl} type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
+        ) : (
+          // Image background
+          <div 
+            className={styles.backgroundImage}
+            style={{
+              backgroundImage: theme.backgroundImage
+                ? `url(${theme.backgroundImage})`
+                : `url(${bgImage})`,
+            }}
+          />
+        )}
+      </div>
       
       {/* DARK OVERLAY */}
       <div className={styles.overlay}></div>
@@ -87,12 +120,10 @@ const Dashboard: React.FC = () => {
         
         {/* Main Glass Display Card */}
         <div className={styles.displayCard}>
-          <div className={styles.companyLabel}>CLB Holdings Berhad</div>
-
           {hasActiveClient ? (
             // --- ACTIVE STATE (Client Detected) ---
             <div key={activeClient?.epc}>
-              <h1 className={styles.welcomeTitle}>Welcome to our Showroom</h1>
+              <h1 className={styles.welcomeTitle}>Welcome to our Experience Center</h1>
               
               {/* 1. Client Name */}
               <div className={styles.clientName}>
@@ -125,12 +156,14 @@ const Dashboard: React.FC = () => {
           )}
         </div>
 
+        {/* Company Label - Moved to left footer */}
+        <div className={styles.companyLabel}>CLB Holdings Berhad</div>
+
         {/* Floating Clock */}
         <div className={styles.clockContainer}>
           <div className={styles.timeDisplay}>{currentDateTime.time}</div>
           <div className={styles.dateDisplay}>{currentDateTime.date}</div>
         </div>
-
       </main>
     </div>
   );

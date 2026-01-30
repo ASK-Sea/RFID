@@ -2,7 +2,7 @@ import { React, useState, useEffect } from "../../import";
 import { axios, io, Socket, useTheme, Header, Sidebar, bgImage } from "../../import";
 
 const Setting: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, getBackgroundVideoUrl } = useTheme();
   const [name, setName] = useState("Dummy");
   const [protocol, setProtocol] = useState("mqtt://");
   const [host, setHost] = useState("broker.emqx.io");
@@ -18,6 +18,7 @@ const Setting: React.FC = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connectionLoading, setConnectionLoading] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   // Load saved config and check MQTT status on mount
   useEffect(() => {
@@ -57,6 +58,20 @@ const Setting: React.FC = () => {
       }
     };
   }, []);
+
+  // Load video from IndexedDB
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (theme.backgroundVideo) {
+        const url = await getBackgroundVideoUrl();
+        setVideoUrl(url);
+      } else {
+        setVideoUrl(null);
+      }
+    };
+    
+    loadVideo();
+  }, [theme.backgroundVideo, getBackgroundVideoUrl]);
 
   const checkMqttStatus = async () => {
     try {
@@ -219,13 +234,48 @@ const Setting: React.FC = () => {
       <div className="flex flex-1">
         <Sidebar />
         <main
-          className="flex-1 p-6 bg-cover bg-center"
+          className="flex-1 p-6 bg-cover bg-center relative min-h-screen"
           style={{
-            backgroundImage: theme.backgroundImage ? `url(${theme.backgroundImage})` : `url(${bgImage})`,
             backgroundColor: theme.backgroundColor,
           }}
         >
-          <div className="container mx-auto p-6">
+          {/* Video Background */}
+          {videoUrl ? (
+            <video
+              key={videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          ) : (
+            <>
+              {/* Image Background */}
+              {theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${theme.backgroundImage})`,
+                  }}
+                />
+              )}
+              
+              {/* Default Background */}
+              {!theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${bgImage})`,
+                  }}
+                />
+              )}
+            </>
+          )}
+          
+          <div className="container mx-auto p-6 relative z-10">
             <div className="bg-white/80 rounded-lg p-6 mb-6 shadow-md">
               <h2 className="text-2xl font-bold text-gray-900">MQTT Settings</h2>
             </div>

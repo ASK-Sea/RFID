@@ -1,19 +1,21 @@
+@reference "../../style.css";
+
 /* Themes Page Styles - Module Specific */
 
 .container {
-  composes: global-container from '../../style.css';
+  @apply global-container;
 }
 
 .mainWrapper {
-  composes: global-main-wrapper from '../../style.css';
+  @apply global-main-wrapper;
 }
 
 .mainContent {
-  composes: global-main-content from '../../style.css';
+  @apply global-main-content;
 }
 
 .innerContainer {
-  composes: global-inner-container from '../../style.css';
+  @apply global-inner-container;
   background-color: rgba(255, 255, 255, 0.8);
   box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
@@ -26,7 +28,7 @@
 }
 
 .tabsWrapper {
-  composes: global-flex from '../../style.css';
+  @apply global-flex;
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-xl);
   border-bottom: 2px solid var(--color-gray-300);
@@ -63,11 +65,11 @@
 }
 
 .label {
-  composes: global-form-label from '../../style.css';
+  @apply global-form-label;
 }
 
 .input {
-  composes: global-input-field from '../../style.css';
+  @apply global-input-field;
   max-width: 300px;
 }
 
@@ -123,35 +125,35 @@
 }
 
 .button {
-  composes: global-button from '../../style.css';
+  @apply global-button;
 }
 
 .primaryBtn {
-  composes: global-button-primary from '../../style.css';
+  @apply global-button-primary;
 }
 
 .dangerBtn {
-  composes: global-button-danger from '../../style.css';
+  @apply global-button-danger;
 }
 
 .successBtn {
-  composes: global-button-success from '../../style.css';
+  @apply global-button-success;
 }
 
 .message {
-  composes: global-message from '../../style.css';
+  @apply global-message;
 }
 
 .message.success {
-  composes: global-message-success from '../../style.css';
+  @apply global-message-success;
 }
 
 .message.error {
-  composes: global-message-error from '../../style.css';
+  @apply global-message-error;
 }
 
 .selectField {
-  composes: global-input-field from '../../style.css';
+  @apply global-input-field;
   background-color: white;
   cursor: pointer;
 }

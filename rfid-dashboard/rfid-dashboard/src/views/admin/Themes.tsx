@@ -1,35 +1,71 @@
-import { React, useState, useRef } from "../../import";
+import { React, useState, useRef, useEffect } from "../../import";
 import { useTheme, Header, Sidebar, bgImage, ElementStyle } from "../../import";
 
 const Themes: React.FC = () => {
-  const { theme, updateTheme, updateElementStyle, resetTheme, uploadBackgroundImage } = useTheme();
+  const { theme, updateTheme, updateElementStyle, resetTheme, uploadBackgroundImage, uploadBackgroundVideo, getBackgroundVideoUrl } = useTheme();
   const [activeTab, setActiveTab] = useState<"background" | "elements">("background");
   const [selectedElement, setSelectedElement] = useState<string>("title");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadType, setUploadType] = useState<"image" | "video">("image");
+  const [isUploading, setIsUploading] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Handle background image upload
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Load video from IndexedDB
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (theme.backgroundVideo) {
+        const url = await getBackgroundVideoUrl();
+        setVideoUrl(url);
+      } else {
+        setVideoUrl(null);
+      }
+    };
+    
+    loadVideo();
+  }, [theme.backgroundVideo, getBackgroundVideoUrl]);
+
+  // Handle background media upload
+  const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       try {
+        setIsUploading(true);
         setUploadError(null);
         setUploadSuccess(false);
-        await uploadBackgroundImage(file);
+        
+        if (uploadType === "image") {
+          await uploadBackgroundImage(file);
+        } else {
+          await uploadBackgroundVideo(file);
+        }
+        
         setUploadSuccess(true);
         setTimeout(() => setUploadSuccess(false), 3000);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to upload image";
+        const errorMessage = error instanceof Error ? error.message : "Failed to upload file";
         setUploadError(errorMessage);
-        console.error("Failed to upload image:", error);
+        console.error("Failed to upload file:", error);
+      } finally {
+        setIsUploading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };
 
-  // Handle background color change
-  const handleBackgroundColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateTheme({ backgroundColor: e.target.value });
+  // Clear background media
+  const clearBackgroundMedia = () => {
+    if (uploadType === "image") {
+      updateTheme({ backgroundImage: null });
+    } else {
+      updateTheme({ backgroundVideo: null });
+    }
+    setUploadSuccess(true);
+    setTimeout(() => setUploadSuccess(false), 3000);
   };
 
   // Handle element style changes
@@ -60,13 +96,48 @@ const Themes: React.FC = () => {
       <div className="flex flex-1">
         <Sidebar />
         <main
-          className="flex-1 p-6 bg-cover bg-center overflow-y-auto"
+          className="flex-1 p-6 overflow-y-auto relative min-h-screen"
           style={{
-            backgroundImage: theme.backgroundImage ? `url(${theme.backgroundImage})` : `url(${bgImage})`,
             backgroundColor: theme.backgroundColor,
           }}
         >
-          <div className="container mx-auto p-6 bg-white/80 rounded-lg shadow-lg max-w-4xl">
+          {/* Video Background */}
+          {videoUrl ? (
+            <video
+              key={videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          ) : (
+            <>
+              {/* Image Background */}
+              {theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${theme.backgroundImage})`,
+                  }}
+                />
+              )}
+              
+              {/* Default Background */}
+              {!theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${bgImage})`,
+                  }}
+                />
+              )}
+            </>
+          )}
+          
+          <div className="container mx-auto p-6 rounded-lg shadow-lg max-w-4xl relative z-10 bg-white/80">
             <h1 className="text-3xl font-bold text-gray-900 mb-6">Theme Customization</h1>
 
             {/* Tab Navigation */}
@@ -75,7 +146,7 @@ const Themes: React.FC = () => {
                 onClick={() => setActiveTab("background")}
                 className={`px-6 py-3 font-semibold text-lg transition-all ${
                   activeTab === "background"
-                    ? "border-b-4 border-blue-500 text-blue-600 hover:text-white"
+                    ? "border-b-4 border-blue-500 text-blue-600"
                     : "text-blue-600 hover:text-white"
                 }`}
               >
@@ -85,7 +156,7 @@ const Themes: React.FC = () => {
                 onClick={() => setActiveTab("elements")}
                 className={`px-6 py-3 font-semibold text-lg transition-all ${
                   activeTab === "elements"
-                    ? "border-b-4 border-blue-500 text-blue-600 hover:text-white"
+                    ? "border-b-4 border-blue-500 text-blue-600"
                     : "text-blue-600 hover:text-white"
                 }`}
               >
@@ -96,50 +167,116 @@ const Themes: React.FC = () => {
             {/* Background Settings Tab */}
             {activeTab === "background" && (
               <div className="space-y-6">
+                {/* Background Type Selection */}
                 <div className="bg-gray-50 p-6 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Background Image</h2>
-                  <div className="space-y-4">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Background Type</h2>
+                  <div className="flex gap-4 mb-4">
                     <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="w-full px-4 py-3 bg-blue-600 text-blue-600 font-semibold rounded-lg hover:bg-blue-700 hover:text-white transition-colors"
+                      onClick={() => setUploadType("image")}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        uploadType === "image"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
                     >
-                      Upload Background Image
+                      Image
                     </button>
-                    {uploadError && (
-                      <p className="text-red-600 font-semibold">✗ {uploadError}</p>
-                    )}
-                    {uploadSuccess && (
-                      <p className="text-green-600 font-semibold">✓ Background image uploaded successfully</p>
-                    )}
-                    {theme.backgroundImage && !uploadError && !uploadSuccess && (
-                      <p className="text-green-600 font-semibold">✓ Background image active</p>
+                    <button
+                      onClick={() => setUploadType("video")}
+                      className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
+                        uploadType === "video"
+                          ? "bg-blue-600 text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      Video
+                    </button>
+                  </div>
+                  
+                  <div className="text-sm text-gray-600">
+                    {uploadType === "image" ? (
+                      <p>Maximum image size: 3.5MB</p>
+                    ) : (
+                      <p>Maximum video size: 20MB. Supported formats: MP4, WebM, OGG</p>
                     )}
                   </div>
                 </div>
 
-                {/* <div className="bg-gray-50 p-6 rounded-lg">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-4">Background Color</h2>
-                  <div className="space-y-3">
+                {/* Upload Section */}
+                <div className="bg-gray-50 p-6 rounded-lg">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                    {uploadType === "image" ? "Background Image" : "Background Video"}
+                  </h2>
+                  <div className="space-y-4">
                     <input
-                      type="color"
-                      value={theme.backgroundColor}
-                      onChange={handleBackgroundColorChange}
-                      className="w-full h-12 cursor-pointer rounded-lg border-2 border-gray-300"
+                      ref={fileInputRef}
+                      type="file"
+                      accept={uploadType === "image" ? "image/*" : "video/*"}
+                      onChange={handleMediaUpload}
+                      className="hidden"
                     />
-                    <p className="text-black">Current Color: {theme.backgroundColor}</p>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className={`w-full px-4 py-3 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                        isUploading
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700"
+                      }`}
+                    >
+                      {isUploading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Uploading...
+                        </>
+                      ) : (
+                        `Upload ${uploadType === "image" ? "Image" : "Video"}`
+                      )}
+                    </button>
+                    
+                    {/* Clear button if media exists */}
+                    {(uploadType === "image" && theme.backgroundImage) || 
+                     (uploadType === "video" && theme.backgroundVideo) ? (
+                      <button
+                        onClick={clearBackgroundMedia}
+                        disabled={isUploading}
+                        className="w-full px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Remove {uploadType === "image" ? "Image" : "Video"}
+                      </button>
+                    ) : null}
+                    
+                    {uploadError && (
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-red-600 font-semibold">✗ {uploadError}</p>
+                      </div>
+                    )}
+                    {uploadSuccess && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-green-600 font-semibold">
+                          ✓ {uploadType === "image" ? "Image" : "Video"} uploaded successfully
+                        </p>
+                      </div>
+                    )}
+                    {uploadType === "image" && theme.backgroundImage && !uploadError && !uploadSuccess && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-green-600 font-semibold">✓ Background image active</p>
+                      </div>
+                    )}
+                    {uploadType === "video" && theme.backgroundVideo && !uploadError && !uploadSuccess && (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <p className="text-green-600 font-semibold">✓ Background video active</p>
+                      </div>
+                    )}
                   </div>
-                </div> */}
+                </div>
 
                 <button
                   onClick={resetTheme}
-                  className="w-full px-4 py-3 bg-red-600 text-blue-600 font-semibold rounded-lg hover:bg-red-700 hover:text-white transition-colors"
+                  className="w-full px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition-colors"
                 >
                   Reset to Default Theme
                 </button>
@@ -174,27 +311,6 @@ const Themes: React.FC = () => {
                   <h2 className="text-xl font-semibold text-gray-900 mb-4">
                     {elementDisplayNames[selectedElement] || (selectedElement.charAt(0).toUpperCase() + selectedElement.slice(1))} Styles
                   </h2>
-
-                  {/* Background Color */}
-                  {/* <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Background Color
-                    </label>
-                    <div className="flex gap-3">
-                      <input
-                        type="color"
-                        value={currentElementStyle.backgroundColor}
-                        onChange={(e) => handleElementStyleChange("backgroundColor", e.target.value)}
-                        className="w-16 h-10 cursor-pointer rounded-lg border-2 border-gray-300"
-                      />
-                      <input
-                        type="text"
-                        value={currentElementStyle.backgroundColor}
-                        onChange={(e) => handleElementStyleChange("backgroundColor", e.target.value)}
-                        className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg placeholder-gray-300 text-black"
-                      />
-                    </div>
-                  </div> */}
 
                   {/* Text Color */}
                   <div>

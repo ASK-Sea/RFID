@@ -4,7 +4,7 @@ import { Stat, Tag, RegisteredTagStat, ResetBaselines } from "../../types";
 
 // --- Component ---
 const TagManagement: React.FC = () => {
-  const { theme } = useTheme();
+  const { theme, getBackgroundVideoUrl } = useTheme();
   const [stats, setStats] = useState<Stat[]>([]);
   const [tagList, setTagList] = useState<Tag[]>([]);
   const [newEpc, setNewEpc] = useState("");
@@ -23,6 +23,7 @@ const TagManagement: React.FC = () => {
     return saved ? JSON.parse(saved) : {};
   });
   const [selectedTags, setSelectedTags] = useState<Record<string, boolean>>({});
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Pagination states
@@ -40,6 +41,20 @@ const TagManagement: React.FC = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
+
+  // Load video from IndexedDB
+  useEffect(() => {
+    const loadVideo = async () => {
+      if (theme.backgroundVideo) {
+        const url = await getBackgroundVideoUrl();
+        setVideoUrl(url);
+      } else {
+        setVideoUrl(null);
+      }
+    };
+    
+    loadVideo();
+  }, [theme.backgroundVideo, getBackgroundVideoUrl]);
 
   // --- Update registeredTagStats ---
   useEffect(() => {
@@ -257,13 +272,48 @@ const TagManagement: React.FC = () => {
       <div className="flex flex-1">
         <Sidebar />
         <main
-          className="flex-1 p-4 bg-gray-50 overflow-auto"
+          className="flex-1 p-4 bg-gray-50 overflow-auto relative min-h-screen"
           style={{
-            backgroundImage: theme.backgroundImage ? `url(${theme.backgroundImage})` : `url(${bgImage})`,
             backgroundColor: theme.backgroundColor,
           }}
         >
-          <div className="max-w-7xl mx-auto space-y-6">
+          {/* Video Background */}
+          {videoUrl ? (
+            <video
+              key={videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="absolute top-0 left-0 w-full h-full object-cover z-0"
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+          ) : (
+            <>
+              {/* Image Background */}
+              {theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${theme.backgroundImage})`,
+                  }}
+                />
+              )}
+              
+              {/* Default Background */}
+              {!theme.backgroundImage && (
+                <div 
+                  className="absolute top-0 left-0 w-full h-full bg-cover bg-center z-0"
+                  style={{
+                    backgroundImage: `url(${bgImage})`,
+                  }}
+                />
+              )}
+            </>
+          )}
+          
+          <div className="max-w-7xl mx-auto space-y-6 relative z-10">
             {/* Header */}
             <div className="bg-white/80 rounded-lg p-6 mb-6 shadow-md">
               <h1 className="text-2xl font-bold text-gray-900">
@@ -275,7 +325,7 @@ const TagManagement: React.FC = () => {
             </div>
 
             {/* Tag Management & Registered Tags */}
-            <div className="card">
+            <div className="card bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6">
               <h2 className="text-sm font-medium text-gray-900 mb-5">
                 Tag Management
               </h2>
@@ -290,7 +340,7 @@ const TagManagement: React.FC = () => {
                       value={newEpc}
                       onChange={(e) => setNewEpc(e.target.value)}
                       placeholder="e.g., TAG001"
-                      className="input-field placeholder-gray-400 border-gray-300"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                     />
                   </div>
                   <div>
@@ -301,7 +351,7 @@ const TagManagement: React.FC = () => {
                       value={newTagName}
                       onChange={(e) => setNewTagName(e.target.value)}
                       placeholder="e.g., Entrance Door"
-                      className="input-field placeholder-gray-400 border-gray-300"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                     />
                   </div>
                   <div>
@@ -312,7 +362,7 @@ const TagManagement: React.FC = () => {
                       value={newPosition}
                       onChange={(e) => setNewPosition(e.target.value)}
                       placeholder="e.g., Technician"
-                      className="input-field placeholder-gray-400 border-gray-300"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                     />
                   </div>
                   <div>
@@ -323,7 +373,7 @@ const TagManagement: React.FC = () => {
                       value={newPurpose}
                       onChange={(e) => setNewPurpose(e.target.value)}
                       placeholder="e.g., Meeting"
-                      className="input-field placeholder-gray-400 border-gray-300"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder-gray-400 text-gray-700"
                     />
                   </div>
                   <button
@@ -337,7 +387,7 @@ const TagManagement: React.FC = () => {
             </div>
 
             {/* Tag List */}
-            <div className="card">
+            <div className="card bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6">
               <h2 className="text-sm font-medium text-gray-900 mb-5">
                 Tag List
               </h2>
@@ -368,7 +418,7 @@ const TagManagement: React.FC = () => {
                           </th>
                           <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
                             {" "}
-                            -{" "}
+                            -
                           </th>
                         </tr>
                       </thead>
@@ -422,7 +472,7 @@ const TagManagement: React.FC = () => {
             </div>
 
             {/* Tag Stream Table */}
-            <div className="card">
+            <div className="card bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-sm font-medium text-gray-900">
                   Tag Stream
@@ -508,7 +558,7 @@ const TagManagement: React.FC = () => {
             </div>
 
             {/* Count with Reset Feature */}
-            <div className="card">
+            <div className="card bg-white/80 backdrop-blur-sm rounded-lg shadow-lg p-6">
               <h2 className="text-sm font-medium text-gray-900 mb-5">
                 Count with Reset Feature
               </h2>
