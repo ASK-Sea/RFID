@@ -90,6 +90,13 @@ const Themes: React.FC = () => {
     date: "Date",
   };
 
+  // Local page-only theme: null = follow global, 'dark' = force dark for this page
+  const [pageTheme, setPageTheme] = useState<"light" | "dark" | null>(null);
+
+  const togglePageTheme = () => {
+    setPageTheme((prev) => (prev === "dark" ? null : "dark"));
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
@@ -137,8 +144,18 @@ const Themes: React.FC = () => {
             </>
           )}
           
-          <div className="container mx-auto p-6 rounded-lg shadow-lg max-w-4xl relative z-10 bg-white/80">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Theme Customization</h1>
+          <div data-theme={pageTheme ?? undefined} className="container mx-auto p-6 rounded-lg shadow-lg max-w-4xl relative z-10 bg-white/80 text-gray-900">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className="text-3xl font-bold">Theme Customization</h1>
+              <button
+                onClick={togglePageTheme}
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors text-sm ${
+                  pageTheme === "dark" ? "bg-gray-200 text-gray-900" : "bg-gray-800 text-white"
+                }`}
+              >
+                {pageTheme === "dark" ? "Disable Dark Mode" : "Enable Dark Mode"}
+              </button>
+            </div>
 
             {/* Tab Navigation */}
             <div className="flex gap-4 mb-6 border-b-2 border-gray-300">
@@ -152,7 +169,7 @@ const Themes: React.FC = () => {
               >
                 Background Settings
               </button>
-              <button
+              {/* <button
                 onClick={() => setActiveTab("elements")}
                 className={`px-6 py-3 font-semibold text-lg transition-all ${
                   activeTab === "elements"
@@ -161,7 +178,7 @@ const Themes: React.FC = () => {
                 }`}
               >
                 Element Styles
-              </button>
+              </button> */}
             </div>
 
             {/* Background Settings Tab */}

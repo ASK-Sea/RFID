@@ -479,7 +479,24 @@ button:focus-visible {
     color: #747bff;
   }
   button {
-    background-color: #f9f9f9;
+    background-color: var(--color-primary)
   }
+}
+
+/* Explicit theme attribute overrides take precedence over media queries.
+   When JS sets `document.documentElement.setAttribute('data-theme', 'dark')`
+   these rules will apply and effectively cancel the prefers-color-scheme: light rules. */
+
+[data-theme="light"] {
+  color: #213547;
+  background-color: #ffffff;
+}
+
+[data-theme="light"] a:hover {
+  color: #747bff;
+}
+
+[data-theme="light"] button {
+  background-color: var(--color-primary);
 }
 
