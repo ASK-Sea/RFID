@@ -2,7 +2,7 @@ import { React, useState, useRef, useEffect } from "../../import";
 import { useTheme, Header, Sidebar, bgImage, ElementStyle } from "../../import";
 
 const Themes: React.FC = () => {
-  const { theme, updateTheme, updateElementStyle, resetTheme, uploadBackgroundImage, uploadBackgroundVideo, getBackgroundVideoUrl } = useTheme();
+  const { theme, updateTheme, updateElementStyle, resetTheme, uploadBackgroundImage, uploadBackgroundVideo, getBackgroundVideoUrl, toggleDarkMode } = useTheme();
   const [activeTab, setActiveTab] = useState<"background" | "elements">("background");
   const [selectedElement, setSelectedElement] = useState<string>("title");
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -90,11 +90,14 @@ const Themes: React.FC = () => {
     date: "Date",
   };
 
-  // Local page-only theme: null = follow global, 'dark' = force dark for this page
-  const [pageTheme, setPageTheme] = useState<"light" | "dark" | null>(null);
-
-  const togglePageTheme = () => {
-    setPageTheme((prev) => (prev === "dark" ? null : "dark"));
+  // Use global toggleDarkMode to switch the whole app between light/dark
+  // (toggleDarkMode may be undefined in some contexts)
+  const handleGlobalToggle = () => {
+    try {
+      toggleDarkMode && toggleDarkMode();
+    } catch (err) {
+      console.error('toggleDarkMode error', err);
+    }
   };
 
   return (
@@ -144,16 +147,16 @@ const Themes: React.FC = () => {
             </>
           )}
           
-          <div data-theme={pageTheme ?? undefined} className="container mx-auto p-6 rounded-lg shadow-lg max-w-4xl relative z-10 bg-white/80 text-gray-900">
+          <div className="container mx-auto p-6 rounded-lg shadow-lg max-w-4xl relative z-10 bg-white/80 text-gray-900">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-3xl font-bold">Theme Customization</h1>
               <button
-                onClick={togglePageTheme}
+                onClick={handleGlobalToggle}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors text-sm ${
-                  pageTheme === "dark" ? "bg-gray-200 text-gray-900" : "bg-gray-800 text-white"
+                  theme.mode === "dark" ? "bg-gray-200 text-white" : "bg-gray-800 text-white"
                 }`}
               >
-                {pageTheme === "dark" ? "Disable Dark Mode" : "Enable Dark Mode"}
+                {theme.mode === "dark" ? "Disable Dark Mode" : "Enable Dark Mode"}
               </button>
             </div>
 

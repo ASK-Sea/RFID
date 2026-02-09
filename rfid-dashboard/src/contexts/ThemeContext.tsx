@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from "react";
 import { ThemeConfig, ThemeContextType, DEFAULT_THEME, ElementStyle } from "../types/theme";
 
 // Create the context
@@ -145,6 +145,26 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         console.error('Failed to save theme to localStorage:', error);
       }
       
+      return updated;
+    });
+  }, []);
+
+  // Toggle dark/light mode globally and persist
+  const toggleDarkMode = useCallback(() => {
+    setTheme((prev) => {
+      const nextMode = prev.mode === "dark" ? "light" : "dark";
+      const updated = { ...prev, mode: nextMode };
+      try {
+        const { backgroundVideo, ...toStore } = updated;
+        localStorage.setItem("rfid_theme_config", JSON.stringify(toStore));
+      } catch (error) {
+        console.error('Failed to save theme mode to localStorage:', error);
+      }
+      try {
+        document.documentElement.setAttribute('data-theme', nextMode);
+      } catch (err) {
+        // ignore in non-browser env
+      }
       return updated;
     });
   }, []);
@@ -300,6 +320,16 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     checkForStoredVideo();
   });
 
+  // Ensure document attribute reflects current mode (or system preference)
+  useEffect(() => {
+    try {
+      const mode = theme.mode ?? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', mode);
+    } catch (err) {
+      // ignore when not in browser
+    }
+  }, [theme.mode]);
+
   return (
     <ThemeContext.Provider
       value={{
@@ -310,6 +340,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         uploadBackgroundImage,
         uploadBackgroundVideo,
         getBackgroundVideoUrl,
+        toggleDarkMode,
       }}
     >
       {children}

@@ -11,6 +11,8 @@ export interface ThemeConfig {
   backgroundImage: string | null;
   backgroundVideo: string | null;
   backgroundColor: string;
+  // Light / dark mode (optional)
+  mode?: "light" | "dark";
   
   // Element specific styling
   elements: Record<string, ElementStyle>;
@@ -24,6 +26,7 @@ export interface ThemeContextType {
   uploadBackgroundImage: (file: File) => Promise<void>;
   uploadBackgroundVideo: (file: File) => Promise<void>;
   getBackgroundVideoUrl: () => Promise<string | null>; // Add this
+  toggleDarkMode?: () => void;
 }
 
 // Default theme
@@ -31,6 +34,7 @@ export const DEFAULT_THEME: ThemeConfig = {
   backgroundImage: null,
   backgroundVideo: null,
   backgroundColor: "#ffffff",
+  mode: "light",
   elements: {
     "title": {
       backgroundColor: "rgba(255, 255, 255, 0.4)",
