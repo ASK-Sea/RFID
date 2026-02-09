@@ -166,7 +166,7 @@ const Themes: React.FC = () => {
                 onClick={() => setActiveTab("background")}
                 className={`px-6 py-3 font-semibold text-lg transition-all ${
                   activeTab === "background"
-                    ? "border-b-4 border-blue-500 text-blue-600"
+                    ? "border-b-4 border-blue-500 text-gray-200"
                     : "text-blue-600 hover:text-white"
                 }`}
               >
