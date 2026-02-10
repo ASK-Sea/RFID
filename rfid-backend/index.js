@@ -48,14 +48,25 @@ io.on('connection', (socket) => {
 // MQTT connection is now controlled only by the Settings form
 // startMQTT is no longer auto-started to avoid conflicts with managed connection
 
-// Start express server
-const PORT = process.env.PORT || 5001;
-server.listen(PORT, () => {
-  const url = `http://localhost:${PORT}`;
-  console.log(`Server running on ${url}`);
-  
-  // Auto-launch the dashboard in the default browser
-  open(url).catch(err => {
-    console.warn(`Could not auto-launch browser: ${err.message}`);
+// Start express server with port fallback logic
+function startServer(port) {
+  server.listen(port, () => {
+    const url = `http://localhost:${port}`;
+    console.log(`Server running on ${url}`);
+    
+    // Auto-launch the dashboard in the default browser
+    open(url).catch(err => {
+      console.warn(`Could not auto-launch browser: ${err.message}`);
+    });
+  }).on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.log(`Port ${port} is in use, trying port ${port + 1}...`);
+      startServer(port + 1);
+    } else {
+      throw err;
+    }
   });
-});
+}
+
+const PORT = process.env.PORT || 5001;
+startServer(PORT);
