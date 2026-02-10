@@ -26,7 +26,7 @@ const Setting: React.FC = () => {
     checkMqttStatus();
     
     // Connect to Socket.IO for real-time updates
-    const newSocket = io("http://localhost:5001", {
+    const newSocket = io(window.location.origin, {
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
@@ -76,7 +76,7 @@ const Setting: React.FC = () => {
   const checkMqttStatus = async () => {
     try {
       setStatusLoading(true);
-      const response = await axios.get("http://localhost:5001/api/mqtt/status");
+      const response = await axios.get("/api/mqtt/status");
       console.log("MQTT status response:", response.data);
       setMqttStatus(response.data.connected);
     } catch (error) {
@@ -149,7 +149,7 @@ const Setting: React.FC = () => {
       showMessage("Saving configuration...", "success");
       
       // Save to backend
-      const response = await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      const response = await axios.post("/api/mqtt/save", settings);
       console.log("Save response:", response.data);
       
       // Save to localStorage
@@ -189,11 +189,11 @@ const Setting: React.FC = () => {
         topic,
       };
       
-      await axios.post("http://localhost:5001/api/mqtt/save", settings);
+      await axios.post("/api/mqtt/save", settings);
       localStorage.setItem("mqttConfig", JSON.stringify(settings));
       
       // Then connect
-      const response = await axios.post("http://localhost:5001/api/mqtt/connect");
+      const response = await axios.post("/api/mqtt/connect");
       
       showMessage("✓ MQTT connected successfully!", "success");
       await checkMqttStatus();
@@ -213,7 +213,7 @@ const Setting: React.FC = () => {
       setConnectionLoading(true);
       showMessage("Disconnecting from MQTT broker...", "success");
       
-      const response = await axios.post("http://localhost:5001/api/mqtt/disconnect");
+      const response = await axios.post("/api/mqtt/disconnect");
       
       showMessage("✓ MQTT disconnected successfully!", "success");
       await checkMqttStatus();

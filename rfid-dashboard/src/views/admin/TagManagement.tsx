@@ -206,7 +206,7 @@ const TagManagement: React.FC = () => {
   // --- API calls --- List stats
   const loadStats = async () => {
     try {
-      const res = await axios.get<Stat[]>("http://localhost:5001/api/stats");
+      const res = await axios.get<Stat[]>("/api/stats");
       console.log("📊 Loaded stats from API:", res.data);
       setStats(res.data);
     } catch {
@@ -217,7 +217,7 @@ const TagManagement: React.FC = () => {
   // ---API calls --- List tags
   const loadTags = async () => {
     try {
-      const res = await axios.get<Tag[]>("http://localhost:5001/api/tags");
+      const res = await axios.get<Tag[]>("/api/tags");
       setTagList(res.data);
     } catch {
       setTagList([]);
@@ -230,7 +230,7 @@ const TagManagement: React.FC = () => {
   const saveTag = async () => {
     if (!newEpc || !newTagName) return;
     try {
-      await axios.post("http://localhost:5001/api/tags", {
+      await axios.post("/api/tags", {
         epc: newEpc,
         tag_name: newTagName,
         position: newPosition,
@@ -250,7 +250,7 @@ const TagManagement: React.FC = () => {
   const deleteTag = async (epc: string) => {
     if (!window.confirm("Are you sure you want to delete this tag?")) return;
     try {
-      await axios.delete(`http://localhost:5001/api/tags/${epc}`);
+      await axios.delete(`/api/tags/${epc}`);
       const newBaselines = { ...resetBaselines };
       delete newBaselines[epc];
       setResetBaselines(newBaselines);
